@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 
@@ -39,11 +39,15 @@ class ConfirmDeviceCredentialActivity : ComponentActivity() {
         setContent {
             WearAuthnTheme {
                 val listState = rememberScalingLazyListState()
-                ScreenScaffold(scrollState = listState) {
+                Scaffold(
+                    positionIndicator = {
+                        PositionIndicator(scalingLazyListState = listState)
+                    }
+                ) {
                     ScalingLazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 8.dp),
                         state = listState,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -52,43 +56,43 @@ class ConfirmDeviceCredentialActivity : ComponentActivity() {
                                 painter = painterResource(id = R.drawable.ic_launcher_outline),
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colors.primary
                             )
                         }
                         item {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = stringResource(R.string.confirm_lock_title),
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.title2,
                                 textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = MaterialTheme.colors.onBackground
                             )
                         }
                         item {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = stringResource(R.string.confirm_lock_message),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.body2,
                                 textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colors.onSurfaceVariant
                             )
                         }
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(
+                            Chip(
+                                modifier = Modifier.fillMaxWidth(),
                                 onClick = { launchCredentialConfirmation() },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(stringResource(R.string.confirm_lock_continue))
-                            }
+                                label = { Text(stringResource(R.string.confirm_lock_continue)) },
+                                colors = ChipDefaults.primaryChipColors()
+                            )
                         }
                         item {
-                            FilledTonalButton(
+                            CompactChip(
+                                modifier = Modifier.fillMaxWidth(),
                                 onClick = { returnResult(Activity.RESULT_CANCELED) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(stringResource(R.string.confirm_lock_cancel))
-                            }
+                                label = { Text(stringResource(R.string.confirm_lock_cancel)) },
+                                colors = ChipDefaults.secondaryChipColors()
+                            )
                         }
                     }
                 }

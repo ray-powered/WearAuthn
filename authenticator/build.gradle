@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 
 android {
     kotlinOptions {
-        freeCompilerArgs = ["-XXLanguage:+InlineClasses", "-Xopt-in=org.mylibrary.OptInAnnotation"]
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses", "-opt-in=org.mylibrary.OptInAnnotation"]
         jvmTarget = "1.8"
     }
     signingConfigs {
@@ -92,7 +92,7 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.8.2'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
 
-    implementation 'androidx.wear.compose:compose-material3:1.0.0-alpha18'
+    implementation 'androidx.wear.compose:compose-material:1.3.0'
     implementation 'androidx.wear.compose:compose-foundation:1.3.0'
     implementation 'androidx.wear.compose:compose-navigation:1.3.0'
 

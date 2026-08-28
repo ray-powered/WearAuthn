@@ -13,7 +13,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
+import androidx.wear.compose.material.dialog.Dialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.henneke.wearauthn.BuildConfig
@@ -44,7 +45,11 @@ class AboutActivity : ComponentActivity() {
                     }
                 }
 
-                ScreenScaffold(scrollState = listState) {
+                Scaffold(
+                    positionIndicator = {
+                        PositionIndicator(scalingLazyListState = listState)
+                    }
+                ) {
                     ScalingLazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -56,8 +61,8 @@ class AboutActivity : ComponentActivity() {
                             ListHeader {
                                 Text(
                                     text = stringResource(R.string.app_name),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.title2,
+                                    color = MaterialTheme.colors.primary,
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -65,8 +70,8 @@ class AboutActivity : ComponentActivity() {
                         item {
                             Text(
                                 text = BuildConfig.VERSION_NAME,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.caption1,
+                                color = MaterialTheme.colors.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -79,8 +84,8 @@ class AboutActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     text = stringResource(R.string.about_how_to_use).replace("<b>", "").replace("</b>", ""),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.body2,
+                                    color = MaterialTheme.colors.onSurface
                                 )
                             }
                         }
@@ -98,7 +103,7 @@ class AboutActivity : ComponentActivity() {
                                         modifier = Modifier.size(24.dp)
                                     )
                                 },
-                                colors = ChipDefaults.chipColors()
+                                colors = ChipDefaults.secondaryChipColors()
                             )
                         }
                         item {
@@ -109,8 +114,8 @@ class AboutActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     text = stringResource(keyStorageRes),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.body2,
+                                    color = MaterialTheme.colors.onSurfaceVariant,
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -121,7 +126,7 @@ class AboutActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = { textDialogContent = privacyPolicy },
                                 label = { Text(stringResource(R.string.label_privacy)) },
-                                colors = ChipDefaults.chipColors()
+                                colors = ChipDefaults.secondaryChipColors()
                             )
                         }
                         item {
@@ -129,7 +134,7 @@ class AboutActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = { textDialogContent = licensesText },
                                 label = { Text(stringResource(R.string.label_licenses)) },
-                                colors = ChipDefaults.chipColors()
+                                colors = ChipDefaults.secondaryChipColors()
                             )
                         }
                     }
@@ -138,29 +143,33 @@ class AboutActivity : ComponentActivity() {
                 // Full text viewer dialog
                 textDialogContent?.let { content ->
                     val textListState = rememberScalingLazyListState()
-                    ScreenScaffold(scrollState = textListState) {
+                    Dialog(
+                        showDialog = textDialogContent != null,
+                        onDismissRequest = { textDialogContent = null },
+                        scrollState = textListState
+                    ) {
                         ScalingLazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 8.dp),
                             state = textListState,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             item {
                                 Text(
                                     text = content,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.body2,
+                                    color = MaterialTheme.colors.onSurface
                                 )
                             }
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Button(
+                                CompactChip(
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { textDialogContent = null },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.confirm_lock_continue))
-                                }
+                                    label = { Text(stringResource(R.string.confirm_lock_continue)) },
+                                    colors = ChipDefaults.primaryChipColors()
+                                )
                             }
                         }
                     }
@@ -181,4 +190,5 @@ class AboutActivity : ComponentActivity() {
         }
     }
 }
+
 

@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.wearable.complications.ComplicationProviderService
 import android.support.wearable.complications.ProviderUpdateRequester
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
 import com.google.android.gms.common.util.Hex
 import me.henneke.wearauthn.Logging
 import me.henneke.wearauthn.R
@@ -48,7 +48,7 @@ import java.util.Date
 import java.util.Locale
 
 @ExperimentalUnsignedTypes
-class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.AmbientCallbackProvider {
+class AuthenticatorAttachedActivity : FragmentActivity(), AmbientModeSupport.AmbientCallbackProvider {
 
     private var transactionManager: TransactionManager? = null
     private var hidDeviceProfile: HidDeviceProfile? = null
@@ -130,13 +130,17 @@ class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.Am
                     ) {
                         Text(
                             text = ambientTime,
-                            style = MaterialTheme.typography.displayMedium,
-                            color = MaterialTheme.colorScheme.onBackground
+                            style = MaterialTheme.typography.display1,
+                            color = MaterialTheme.colors.onBackground
                         )
                     }
                 } else {
                     val listState = rememberScalingLazyListState()
-                    ScreenScaffold(scrollState = listState) {
+                    Scaffold(
+                        positionIndicator = {
+                            PositionIndicator(scalingLazyListState = listState)
+                        }
+                    ) {
                         ScalingLazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -149,7 +153,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.Am
                                     painter = painterResource(R.drawable.ic_btn_bluetooth),
                                     contentDescription = null,
                                     modifier = Modifier.size(28.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colors.primary
                                 )
                             }
                             item {
@@ -160,18 +164,18 @@ class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.Am
                                     } else {
                                         "Attached to\n$deviceName"
                                     },
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.title2,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onBackground
+                                    color = MaterialTheme.colors.onBackground
                                 )
                             }
                             item {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = stringResource(R.string.connected_to_device_explanation),
-                                    style = MaterialTheme.typography.bodySmall,
+                                    style = MaterialTheme.typography.body2,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colors.onSurfaceVariant
                                 )
                             }
                             item {
@@ -189,7 +193,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.Am
                                             modifier = Modifier.size(24.dp)
                                         )
                                     },
-                                    colors = ChipDefaults.chipColors()
+                                    colors = ChipDefaults.secondaryChipColors()
                                 )
                             }
                         }

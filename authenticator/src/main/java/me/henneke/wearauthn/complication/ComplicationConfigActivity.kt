@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.bthid.canUseAuthenticator
 import me.henneke.wearauthn.bthid.defaultAdapter
@@ -42,7 +42,11 @@ class ComplicationConfigActivity : ComponentActivity() {
         setContent {
             WearAuthnTheme {
                 val listState = rememberScalingLazyListState()
-                ScreenScaffold(scrollState = listState) {
+                Scaffold(
+                    positionIndicator = {
+                        PositionIndicator(scalingLazyListState = listState)
+                    }
+                ) {
                     ScalingLazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -54,7 +58,7 @@ class ComplicationConfigActivity : ComponentActivity() {
                             ListHeader {
                                 Text(
                                     text = stringResource(R.string.preference_screen_title_shortcut_picker),
-                                    style = MaterialTheme.typography.titleSmall,
+                                    style = MaterialTheme.typography.title3,
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -64,9 +68,9 @@ class ComplicationConfigActivity : ComponentActivity() {
                             item {
                                 Text(
                                     text = stringResource(R.string.status_bluetooth_tap_and_pair),
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.body2,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colors.onSurfaceVariant
                                 )
                             }
                         } else {
@@ -98,7 +102,7 @@ class ComplicationConfigActivity : ComponentActivity() {
                                             modifier = Modifier.size(24.dp)
                                         )
                                     },
-                                    colors = ChipDefaults.chipColors()
+                                    colors = ChipDefaults.secondaryChipColors()
                                 )
                             }
                         }
@@ -114,4 +118,5 @@ class ComplicationConfigActivity : ComponentActivity() {
         return bonded.filter { it.canUseAuthenticator }
     }
 }
+
 

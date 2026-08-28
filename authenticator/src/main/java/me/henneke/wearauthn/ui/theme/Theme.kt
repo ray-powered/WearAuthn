@@ -1,32 +1,23 @@
 package me.henneke.wearauthn.ui.theme
 
 import androidx.compose.runtime.Composable
-import androidx.wear.compose.material3.ColorScheme
-import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material.Colors
+import androidx.wear.compose.material.MaterialTheme
 
-val WearAuthnColorScheme = ColorScheme(
+val WearAuthnColors = Colors(
     primary = WearAuthnPrimary,
-    primaryContainer = WearAuthnPrimaryContainer,
-    onPrimary = WearAuthnOnPrimary,
-    onPrimaryContainer = WearAuthnOnPrimaryContainer,
+    primaryVariant = WearAuthnPrimaryContainer,
     secondary = WearAuthnSecondary,
-    secondaryContainer = WearAuthnSecondaryContainer,
+    secondaryVariant = WearAuthnSecondaryContainer,
+    background = WearAuthnBackground,
+    surface = WearAuthnSurfaceContainer,
+    error = WearAuthnError,
+    onPrimary = WearAuthnOnPrimary,
     onSecondary = WearAuthnOnSecondary,
-    onSecondaryContainer = WearAuthnOnSecondaryContainer,
-    tertiary = WearAuthnTertiary,
-    onTertiary = WearAuthnOnTertiary,
-    surfaceContainer = WearAuthnSurfaceContainer,
-    surfaceContainerHigh = WearAuthnSurfaceContainerHigh,
+    onBackground = WearAuthnOnBackground,
     onSurface = WearAuthnOnSurface,
     onSurfaceVariant = WearAuthnOutline,
-    outline = WearAuthnOutline,
-    outlineVariant = WearAuthnOutlineVariant,
-    background = WearAuthnBackground,
-    onBackground = WearAuthnOnBackground,
-    error = WearAuthnError,
-    onError = WearAuthnOnError,
-    errorContainer = WearAuthnErrorContainer,
-    onErrorContainer = WearAuthnOnErrorContainer
+    onError = WearAuthnOnError
 )
 
 @Composable
@@ -34,7 +25,8 @@ fun WearAuthnTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = WearAuthnColorScheme,
+        colors = WearAuthnColors,
         content = content
     )
 }
+

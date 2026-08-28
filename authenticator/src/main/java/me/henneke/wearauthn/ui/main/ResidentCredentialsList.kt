@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
+import androidx.wear.compose.material.dialog.Alert
+import androidx.wear.compose.material.dialog.Dialog
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.fido.context.AuthenticatorContext
 import me.henneke.wearauthn.fido.context.WebAuthnCredential
@@ -35,7 +37,11 @@ class ResidentCredentialsList : ComponentActivity() {
                 var selectedCredential by remember { mutableStateOf<Pair<String, WebAuthnCredential>?>(null) }
                 var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
-                ScreenScaffold(scrollState = listState) {
+                Scaffold(
+                    positionIndicator = {
+                        PositionIndicator(scalingLazyListState = listState)
+                    }
+                ) {
                     ScalingLazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -51,7 +57,7 @@ class ResidentCredentialsList : ComponentActivity() {
                                     } else {
                                         stringResource(R.string.credential_management_title)
                                     },
-                                    style = MaterialTheme.typography.titleSmall,
+                                    style = MaterialTheme.typography.title3,
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -64,8 +70,8 @@ class ResidentCredentialsList : ComponentActivity() {
                                 ListHeader {
                                     Text(
                                         text = rpId,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.secondary
+                                        style = MaterialTheme.typography.caption1,
+                                        color = MaterialTheme.colors.secondary
                                     )
                                 }
                             }
@@ -87,7 +93,7 @@ class ResidentCredentialsList : ComponentActivity() {
                                             modifier = Modifier.size(24.dp)
                                         )
                                     },
-                                    colors = ChipDefaults.chipColors()
+                                    colors = ChipDefaults.secondaryChipColors()
                                 )
                             }
                         }
@@ -98,19 +104,23 @@ class ResidentCredentialsList : ComponentActivity() {
                 selectedCredential?.let { (rpId, credential) ->
                     val info = credential.getFormattedInfo() ?: ""
                     val dialogListState = rememberScalingLazyListState()
-                    ScreenScaffold(scrollState = dialogListState) {
+                    Dialog(
+                        showDialog = selectedCredential != null && !showDeleteConfirmDialog,
+                        onDismissRequest = { selectedCredential = null },
+                        scrollState = dialogListState
+                    ) {
                         ScalingLazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 8.dp),
                             state = dialogListState,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             item {
                                 Text(
                                     text = rpId,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.title2,
+                                    color = MaterialTheme.colors.primary,
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -118,31 +128,30 @@ class ResidentCredentialsList : ComponentActivity() {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = info,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.body2,
+                                    color = MaterialTheme.colors.onSurfaceVariant,
                                     textAlign = TextAlign.Center
                                 )
                             }
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Button(
+                                Chip(
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { showDeleteConfirmDialog = true },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    colors = ChipDefaults.chipColors(
+                                        backgroundColor = MaterialTheme.colors.error,
+                                        contentColor = MaterialTheme.colors.onError
                                     ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.button_delete))
-                                }
+                                    label = { Text(stringResource(R.string.button_delete)) }
+                                )
                             }
                             item {
-                                FilledTonalButton(
+                                CompactChip(
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { selectedCredential = null },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.confirm_lock_cancel))
-                                }
+                                    label = { Text(stringResource(R.string.confirm_lock_cancel)) },
+                                    colors = ChipDefaults.secondaryChipColors()
+                                )
                             }
                         }
                     }
@@ -150,27 +159,32 @@ class ResidentCredentialsList : ComponentActivity() {
                     // Delete confirmation dialog
                     if (showDeleteConfirmDialog) {
                         val confirmListState = rememberScalingLazyListState()
-                        ScreenScaffold(scrollState = confirmListState) {
-                            ScalingLazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp),
-                                state = confirmListState,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                item {
+                        Dialog(
+                            showDialog = showDeleteConfirmDialog,
+                            onDismissRequest = { showDeleteConfirmDialog = false },
+                            scrollState = confirmListState
+                        ) {
+                            Alert(
+                                scrollState = confirmListState,
+                                title = {
                                     Text(
                                         text = stringResource(
                                             R.string.prompt_delete_resident_credential_message,
                                             credential.getTwoLineInfo(1).first
                                         ),
-                                        style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Center,
-                                        color = MaterialTheme.colorScheme.error
+                                        color = MaterialTheme.colors.error
                                     )
-                                }
-                                item {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                },
+                                negativeButton = {
+                                    Button(
+                                        onClick = { showDeleteConfirmDialog = false },
+                                        colors = ButtonDefaults.secondaryButtonColors()
+                                    ) {
+                                        Text(stringResource(R.string.confirm_lock_cancel))
+                                    }
+                                },
+                                positiveButton = {
                                     Button(
                                         onClick = {
                                             AuthenticatorContext.deleteResidentCredential(
@@ -181,24 +195,12 @@ class ResidentCredentialsList : ComponentActivity() {
                                             showDeleteConfirmDialog = false
                                             selectedCredential = null
                                         },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.error,
-                                            contentColor = MaterialTheme.colorScheme.onError
-                                        ),
-                                        modifier = Modifier.fillMaxWidth()
+                                        colors = ButtonDefaults.primaryButtonColors()
                                     ) {
                                         Text(stringResource(R.string.button_delete))
                                     }
                                 }
-                                item {
-                                    FilledTonalButton(
-                                        onClick = { showDeleteConfirmDialog = false },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(stringResource(R.string.confirm_lock_cancel))
-                                    }
-                                }
-                            }
+                            )
                         }
                     }
                 }

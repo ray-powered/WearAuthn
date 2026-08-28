@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material.*
 import kotlinx.coroutines.*
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.fido.context.AuthenticatorContext
@@ -39,19 +39,23 @@ class ManageSpaceActivity : ComponentActivity(), CoroutineScope {
                 var step by remember { mutableStateOf(1) }
                 val listState = rememberScalingLazyListState()
 
-                ScreenScaffold(scrollState = listState) {
+                Scaffold(
+                    positionIndicator = {
+                        PositionIndicator(scalingLazyListState = listState)
+                    }
+                ) {
                     ScalingLazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 8.dp),
                         state = listState,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         item {
                             Text(
                                 text = stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.title2,
+                                color = MaterialTheme.colors.error,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -66,44 +70,39 @@ class ManageSpaceActivity : ComponentActivity(), CoroutineScope {
                                         .replace("\n\n\n\n\n\n\n\n\n\n\n", "\n\n")
                                         .replace("<b>", "").replace("</b>", "")
                                 },
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.body2,
                                 textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colors.onSurface
                             )
                         }
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             if (step == 1) {
-                                Button(
+                                Chip(
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { step = 2 },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.generic_accept))
-                                }
+                                    label = { Text(stringResource(R.string.generic_accept)) },
+                                    colors = ChipDefaults.primaryChipColors()
+                                )
                             } else {
-                                Button(
+                                Chip(
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { deleteAllData() },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.error,
-                                        contentColor = MaterialTheme.colorScheme.onError
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.button_delete))
-                                }
+                                    label = { Text(stringResource(R.string.button_delete)) },
+                                    colors = ChipDefaults.chipColors(
+                                        backgroundColor = MaterialTheme.colors.error,
+                                        contentColor = MaterialTheme.colors.onError
+                                    )
+                                )
                             }
                         }
                         item {
-                            FilledTonalButton(
+                            CompactChip(
+                                modifier = Modifier.fillMaxWidth(),
                                 onClick = { returnResult(Activity.RESULT_CANCELED) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(stringResource(R.string.generic_deny))
-                            }
+                                label = { Text(stringResource(R.string.generic_deny)) },
+                                colors = ChipDefaults.secondaryChipColors()
+                            )
                         }
                     }
                 }

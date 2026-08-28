@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.foundation.lazy.items
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material.*
+import androidx.wear.compose.material.dialog.Alert
+import androidx.wear.compose.material.dialog.Dialog
 import me.henneke.wearauthn.LogLevel
 import me.henneke.wearauthn.R
 
@@ -52,7 +55,11 @@ fun MainScreen(
     var showLogLevelDialog by remember { mutableStateOf(false) }
     var showPasswordlessConfirmDialog by remember { mutableStateOf(false) }
 
-    ScreenScaffold(scrollState = listState) {
+    Scaffold(
+        positionIndicator = {
+            PositionIndicator(scalingLazyListState = listState)
+        }
+    ) {
         ScalingLazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,8 +73,8 @@ fun MainScreen(
                     Text(
                         text = stringResource(R.string.app_name),
                         textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        style = MaterialTheme.typography.title2,
+                        color = MaterialTheme.colors.primary
                     )
                 }
             }
@@ -87,8 +94,8 @@ fun MainScreen(
                             )
                         },
                         colors = ChipDefaults.chipColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            labelColor = MaterialTheme.colorScheme.onErrorContainer
+                            backgroundColor = MaterialTheme.colors.error,
+                            contentColor = MaterialTheme.colors.onError
                         )
                     )
                 }
@@ -105,8 +112,8 @@ fun MainScreen(
                         ) {
                             Text(
                                 text = stringResource(R.string.status_nfc_explanation),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.body2,
+                                color = MaterialTheme.colors.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -125,7 +132,7 @@ fun MainScreen(
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
-                            colors = ChipDefaults.chipColors()
+                            colors = ChipDefaults.secondaryChipColors()
                         )
                     }
                     null -> {}
@@ -137,8 +144,8 @@ fun MainScreen(
                 ListHeader {
                     Text(
                         text = stringResource(R.string.preference_category_bluetooth_title),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
+                        style = MaterialTheme.typography.caption1,
+                        color = MaterialTheme.colors.secondary
                     )
                 }
             }
@@ -157,7 +164,7 @@ fun MainScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        colors = ChipDefaults.chipColors()
+                        colors = ChipDefaults.secondaryChipColors()
                     )
                 }
             } else {
@@ -174,13 +181,13 @@ fun MainScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        colors = ChipDefaults.chipColors()
+                        colors = ChipDefaults.secondaryChipColors()
                     )
                 }
 
                 // Discoverable Toggle
                 item {
-                    SwitchButton(
+                    ToggleChip(
                         modifier = Modifier.fillMaxWidth(),
                         checked = isDiscoverable,
                         onCheckedChange = { onRequestMakeDiscoverable() },
@@ -190,7 +197,11 @@ fun MainScreen(
                                 if (isDiscoverable) stringResource(R.string.preference_discoverable_summary_on)
                                 else stringResource(R.string.preference_discoverable_summary_off)
                             )
-                        }
+                        },
+                        toggleControl = {
+                            Switch(checked = isDiscoverable)
+                        },
+                        colors = ToggleChipDefaults.toggleChipColors()
                     )
                 }
 
@@ -203,7 +214,7 @@ fun MainScreen(
                         ) {
                             Text(
                                 text = stringResource(R.string.status_bluetooth_tap_and_pair),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.body2,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -239,7 +250,7 @@ fun MainScreen(
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
-                            colors = ChipDefaults.chipColors()
+                            colors = ChipDefaults.secondaryChipColors()
                         )
                     }
                 }
@@ -250,8 +261,8 @@ fun MainScreen(
                 ListHeader {
                     Text(
                         text = stringResource(R.string.preference_category_advanced_title),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
+                        style = MaterialTheme.typography.caption1,
+                        color = MaterialTheme.colors.secondary
                     )
                 }
             }
@@ -269,7 +280,7 @@ fun MainScreen(
                     null -> stringResource(R.string.preference_single_factor_mode_summary_disabled)
                 }
 
-                SwitchButton(
+                ToggleChip(
                     modifier = Modifier.fillMaxWidth(),
                     checked = isChecked,
                     onCheckedChange = {
@@ -279,7 +290,11 @@ fun MainScreen(
                     },
                     enabled = isEnabled,
                     label = { Text(stringResource(R.string.preference_single_factor_mode_title)) },
-                    secondaryLabel = { Text(summaryText) }
+                    secondaryLabel = { Text(summaryText) },
+                    toggleControl = {
+                        Switch(checked = isChecked, enabled = isEnabled)
+                    },
+                    colors = ToggleChipDefaults.toggleChipColors()
                 )
             }
 
@@ -301,7 +316,7 @@ fun MainScreen(
                             modifier = Modifier.size(24.dp)
                         )
                     },
-                    colors = ChipDefaults.chipColors()
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
 
@@ -318,7 +333,7 @@ fun MainScreen(
                             modifier = Modifier.size(24.dp)
                         )
                     },
-                    colors = ChipDefaults.chipColors()
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
 
@@ -337,7 +352,7 @@ fun MainScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        colors = ChipDefaults.chipColors()
+                        colors = ChipDefaults.secondaryChipColors()
                     )
                 }
             }
@@ -347,51 +362,44 @@ fun MainScreen(
     // Passwordless confirmation dialog
     if (showPasswordlessConfirmDialog) {
         val dialogListState = rememberScalingLazyListState()
-        ScreenScaffold(scrollState = dialogListState) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                state = dialogListState,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                item {
+        Dialog(
+            showDialog = showPasswordlessConfirmDialog,
+            onDismissRequest = { showPasswordlessConfirmDialog = false },
+            scrollState = dialogListState
+        ) {
+            Alert(
+                scrollState = dialogListState,
+                title = {
                     Text(
                         text = stringResource(R.string.prompt_single_factor_mode_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
+                        textAlign = TextAlign.Center
                     )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.prompt_single_factor_mode_message).replace("<br/>", "\n").replace("<b>", "").replace("</b>", ""),
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                },
+                negativeButton = {
+                    Button(
+                        onClick = { showPasswordlessConfirmDialog = false },
+                        colors = ButtonDefaults.secondaryButtonColors()
+                    ) {
+                        Text(stringResource(R.string.generic_deny))
+                    }
+                },
+                positiveButton = {
                     Button(
                         onClick = {
                             showPasswordlessConfirmDialog = false
                             onEnablePasswordlessMode()
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        colors = ButtonDefaults.primaryButtonColors()
                     ) {
                         Text(stringResource(R.string.generic_accept))
                     }
                 }
-                item {
-                    FilledTonalButton(
-                        onClick = { showPasswordlessConfirmDialog = false },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.generic_deny))
-                    }
-                }
+            ) {
+                Text(
+                    text = stringResource(R.string.prompt_single_factor_mode_message).replace("<br/>", "\n").replace("<b>", "").replace("</b>", ""),
+                    style = MaterialTheme.typography.body2,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -399,11 +407,15 @@ fun MainScreen(
     // Log level selection dialog
     if (showLogLevelDialog) {
         val logDialogListState = rememberScalingLazyListState()
-        ScreenScaffold(scrollState = logDialogListState) {
+        Dialog(
+            showDialog = showLogLevelDialog,
+            onDismissRequest = { showLogLevelDialog = false },
+            scrollState = logDialogListState
+        ) {
             ScalingLazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 8.dp),
                 state = logDialogListState,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -411,7 +423,7 @@ fun MainScreen(
                     ListHeader {
                         Text(
                             text = stringResource(R.string.preference_log_level_dialog_title),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.title3,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -425,23 +437,21 @@ fun MainScreen(
                         },
                         label = { Text(level.name) },
                         colors = if (level.name == currentLogLevel) {
-                            ChipDefaults.chipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        } else ChipDefaults.chipColors()
+                            ChipDefaults.primaryChipColors()
+                        } else ChipDefaults.secondaryChipColors()
                     )
                 }
                 item {
-                    FilledTonalButton(
+                    CompactChip(
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = { showLogLevelDialog = false },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.confirm_lock_cancel))
-                    }
+                        label = { Text(stringResource(R.string.confirm_lock_cancel)) },
+                        colors = ChipDefaults.secondaryChipColors()
+                    )
                 }
             }
         }
     }
 }
+
 

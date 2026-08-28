@@ -16,7 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
@@ -46,7 +46,7 @@ import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalUnsignedTypes
-class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging,
+class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
     AmbientModeSupport.AmbientCallbackProvider {
 
     override val TAG = "AuthenticatorActivity"
@@ -218,7 +218,7 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging,
         val isBtOn = btAdapter?.state == BluetoothAdapter.STATE_ON
         isBtEnabledState.value = isBtOn
 
-        if (hasPerms && isBtOn) {
+        if (hasPerms && isBtOn && btAdapter != null) {
             val scanMode = btAdapter.scanMode
             isDiscoverableState.value = scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE
 

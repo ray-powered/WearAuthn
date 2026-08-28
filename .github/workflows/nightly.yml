@@ -31,8 +31,16 @@ jobs:
           ./gradlew -PcommitCount=${{ steps.vars.outputs.commit_count }} -PcommitHash=${{ steps.vars.outputs.sha_short }} -PstorePassword="${{ secrets.NIGHTLY_KEYSTORE_PASSWORD }}" -PkeyPassword="${{ secrets.NIGHTLY_KEYSTORE_PASSWORD }}" assembleNightlySigned
           mv authenticator/build/outputs/apk/nightly/signed/authenticator-nightly-signed.apk authenticator-${{ steps.vars.outputs.sha_short }}.apk
           mv companion/build/outputs/apk/nightly/signed/companion-nightly-signed.apk companion-${{ steps.vars.outputs.sha_short }}.apk
+      - name: Upload Nightly APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: wearauthn-nightly-apks
+          path: |
+            authenticator-${{ steps.vars.outputs.sha_short }}.apk
+            companion-${{ steps.vars.outputs.sha_short }}.apk
       - name: Release
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           files: |
             authenticator-${{ steps.vars.outputs.sha_short }}.apk

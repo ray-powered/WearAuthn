@@ -21,10 +21,11 @@ android {
             keyPassword 'hunter2'
         }
         nightlySign {
-            storeFile file('../nightly_keystore.jks')
-            storePassword project.hasProperty("storePassword") ? project.storePassword : ""
+            def hasPassword = project.hasProperty("storePassword") && project.storePassword != ""
+            storeFile hasPassword ? file('../nightly_keystore.jks') : file('../ci_keystore.jks')
+            storePassword hasPassword ? project.storePassword : "hunter2"
             keyAlias 'key0'
-            keyPassword project.hasProperty("keyPassword") ? project.keyPassword : ""
+            keyPassword (project.hasProperty("keyPassword") && project.keyPassword != "") ? project.keyPassword : "hunter2"
         }
     }
     buildTypes {

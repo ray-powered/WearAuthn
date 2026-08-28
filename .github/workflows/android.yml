@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,5 +17,12 @@ jobs:
         with:
           java-version: 17
           distribution: 'zulu'
-      - name: Build with Gradle
-        run: ./gradlew buildPlayStoreDebug
+      - name: Build APKs
+        run: ./gradlew assemblePlayStoreRelease assemblePlayStoreDebug
+      - name: Upload Release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: wearauthn-apks
+          path: |
+            authenticator/build/outputs/apk/**/*.apk
+            companion/build/outputs/apk/**/*.apk

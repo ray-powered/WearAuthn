@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 
 android {
     kotlinOptions {
-        freeCompilerArgs = ["-XXLanguage:+InlineClasses", "-opt-in=org.mylibrary.OptInAnnotation"]
+        freeCompilerArgs = ["-opt-in=kotlin.ExperimentalUnsignedTypes"]
         jvmTarget = "1.8"
     }
     signingConfigs {

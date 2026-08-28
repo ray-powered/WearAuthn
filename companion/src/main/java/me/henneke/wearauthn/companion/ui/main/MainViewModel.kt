@@ -19,7 +19,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application),
     init {
         capabilityClient.addListener(
             this,
-            CapabilityClient.FILTER_ALL
+            "wearauthn-watch"
         )
         queryWatchAppInstalled()
     }
@@ -47,7 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application),
     }
 
     override fun onCleared() {
-        capabilityClient.removeListener(this)
+        capabilityClient.removeListener(this, "wearauthn-watch")
         viewModelScope.coroutineContext.cancel()
     }
 }

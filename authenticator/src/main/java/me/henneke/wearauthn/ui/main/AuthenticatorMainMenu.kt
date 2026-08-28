@@ -73,7 +73,6 @@ class AuthenticatorMainMenu : PreferenceFragment(), CoroutineScope, Logging {
     private lateinit var nfcSettingsPreference: Preference
     private lateinit var singleFactorModeSwitchPreference: SwitchPreference
     private lateinit var manageCredentialsPreference: Preference
-    private lateinit var supportPreference: Preference
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -128,7 +127,6 @@ class AuthenticatorMainMenu : PreferenceFragment(), CoroutineScope, Logging {
             intent = Intent(context, AboutActivity::class.java)
             intent.`package` = BuildConfig.APPLICATION_ID
         }
-        supportPreference = findPreference(getString(R.string.preference_support_key))
     }
 
     override fun onResume() {
@@ -146,17 +144,6 @@ class AuthenticatorMainMenu : PreferenceFragment(), CoroutineScope, Logging {
         updateNfcState()
         updateUserVerificationPreferencesState()
         updateDiscoverableState()
-        supportPreference.apply {
-            val askForSupport = !UnlockComplicationListenerService.isComplicationEnabled(context)
-            setTitle(if (askForSupport) R.string.preference_support_not_purchased_title else R.string.preference_support_purchased_title)
-            setSummary(if (askForSupport) R.string.preference_support_not_purchased_summary else R.string.preference_support_purchased_summary)
-            setOnPreferenceClickListener {
-                launch {
-                    openPhoneAppOrListing(activity!!)
-                }
-                true
-            }
-        }
         updateLogLevelSwitcher()
     }
 

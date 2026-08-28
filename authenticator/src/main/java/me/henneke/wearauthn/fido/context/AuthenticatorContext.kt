@@ -305,16 +305,27 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
         return getCounter(keyAlias) != null && isValidKeyAlias(keyAlias)
     }
 
+    private var lastDeviceCredentialConfirmedTime: Long = 0L
+
     suspend fun <T> authenticateUserFor(block: () -> T): T? {
         // Confirm device credential and retry if block throws a UserNotAuthenticatedException.
         return try {
             block()
         } catch (e1: UserNotAuthenticatedException) {
-            confirmDeviceCredentialInternal(updateAuthenticatorStatus = true)
-            try {
-                block()
-            } catch (e2: UserNotAuthenticatedException) {
-                null
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - lastDeviceCredentialConfirmedTime < 15_000L) {
+                try {
+                    block()
+                } catch (e2: Exception) {
+                    null
+                }
+            } else {
+                confirmDeviceCredentialInternal(updateAuthenticatorStatus = true)
+                try {
+                    block()
+                } catch (e2: UserNotAuthenticatedException) {
+                    null
+                }
             }
         }
     }
@@ -347,6 +358,11 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
     }
 
     private suspend fun confirmDeviceCredentialInternal(updateAuthenticatorStatus: Boolean) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastDeviceCredentialConfirmedTime < 15_000L) {
+            i { "Skipping redundant device credential confirmation within 15s window" }
+            return
+        }
         if (updateAuthenticatorStatus)
             status = AuthenticatorStatus.WAITING_FOR_UP
         withContext(Dispatchers.Main) {
@@ -361,6 +377,9 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
                                         resultCode: Int,
                                         resultData: Bundle?
                                     ) {
+                                        if (resultCode == Activity.RESULT_OK) {
+                                            lastDeviceCredentialConfirmedTime = android.os.SystemClock.elapsedRealtime()
+                                        }
                                         continuation.resume(null)
                                     }
                                 })

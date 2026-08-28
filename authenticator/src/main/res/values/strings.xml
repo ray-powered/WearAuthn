@@ -95,4 +95,8 @@
     <string name="preference_log_level_dialog_title">Choose a log level</string>
     <string name="preference_log_level_dialog_message">Logs may contain personal information on \"Debug\" or \"Verbose\".</string>
     <string name="status_bluetooth_permissions_required">Bluetooth permission not granted</string>
+    <string name="confirm_device_credential_title">Verify Identity</string>
+    <string name="confirm_device_credential_message">The website requested identity verification. Please confirm your screen lock to proceed.</string>
+    <string name="generic_continue">Continue</string>
+    <string name="generic_cancel">Cancel</string>
 </resources>

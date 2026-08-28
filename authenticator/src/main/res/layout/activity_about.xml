@@ -4,72 +4,118 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:background="@color/md_theme_dark_background"
     tools:context="me.henneke.wearauthn.ui.main.AboutActivity">
-
-    <requestFocus />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp">
+
+        <FrameLayout
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/m3_icon_badge_primary">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/preference_about_title"
+                android:src="@drawable/ic_launcher_outline"
+                android:tint="@color/md_theme_dark_onPrimary" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/titleView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:paddingTop="@dimen/text_vertical_padding"
-            android:textAppearance="@android:style/TextAppearance.Material.Title"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.WearAuthn.Title"
             tools:text="WearAuthn" />
 
         <TextView
             android:id="@+id/versionView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="@android:style/TextAppearance.Material.Body1"
-            tools:text="1.0.0" />
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.WearAuthn.Label"
+            tools:text="v1.0.0" />
 
-        <TextView
+        <!-- Key Storage Status Card -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/text_horizontal_padding"
-            android:text="@string/about_how_to_use"
-            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/m3_card_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
 
-        <ImageButton
-            android:id="@+id/howToUseOpenOnPhoneButton"
-            android:layout_width="wrap_content"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/message_key_storage_type_unknown"
+                android:src="@drawable/ic_shield"
+                android:tint="@color/md_theme_dark_primary" />
+
+            <TextView
+                android:id="@+id/keyStorageView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/message_key_storage_type_unknown"
+                android:textAppearance="@style/TextAppearance.WearAuthn.Body" />
+        </LinearLayout>
+
+        <!-- Usage Guide Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="@dimen/diag_button_bottom_padding"
-            android:background="?android:selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_btn_open_on_phone" />
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/m3_card_background"
+            android:orientation="vertical"
+            android:padding="12dp">
 
-        <TextView
-            android:id="@+id/keyStorageView"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginVertical="@dimen/diag_button_bottom_padding"
-            android:layout_weight="1"
-            android:paddingHorizontal="@dimen/text_horizontal_padding"
-            android:text="@string/message_key_storage_type_unknown"
-            android:textAppearance="@android:style/TextAppearance.Material.Body2" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/about_how_to_use"
+                android:textAppearance="@style/TextAppearance.WearAuthn.Body" />
+
+            <Button
+                android:id="@+id/howToUseOpenOnPhoneButton"
+                style="@style/Widget.WearAuthn.Button.PillTonal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_open_on_phone"
+                android:drawablePadding="6dp"
+                android:drawableTint="@color/md_theme_dark_onSecondaryContainer"
+                android:text="@string/message_continue_on_phone" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/privacyButtton"
-            android:layout_width="wrap_content"
+            style="@style/Widget.WearAuthn.Button.PillSurface"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="@dimen/diag_button_bottom_padding"
+            android:layout_marginBottom="8dp"
             android:text="@string/label_privacy" />
 
         <Button
             android:id="@+id/licensesButtton"
-            android:layout_width="wrap_content"
+            style="@style/Widget.WearAuthn.Button.PillSurface"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginVertical="@dimen/diag_button_bottom_padding"
             android:text="@string/label_licenses" />
+
     </LinearLayout>
 </ScrollView>

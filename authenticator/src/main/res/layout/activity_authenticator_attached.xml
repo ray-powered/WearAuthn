@@ -4,54 +4,88 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/md_theme_dark_background"
     tools:context=".ui.main.AuthenticatorAttachedActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        app:boxedEdges="top">
+        android:fillViewport="true"
+        app:boxedEdges="all">
 
-        <TextView
-            android:id="@+id/connectedToDeviceView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textAlignment="center"
-            android:textAppearance="@android:style/TextAppearance.Material.Title"
-            tools:text="Connected to\nJoe's laptop" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="20dp">
 
-        <TextView
-            android:id="@+id/explanationView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:padding="8dp"
-            android:text="@string/connected_to_device_explanation"
-            android:textAlignment="center"
-            android:textAppearance="@android:style/TextAppearance.Material.Body1" />
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/m3_icon_badge_primary">
 
-        <ImageButton
-            android:id="@+id/setupOpenOnPhoneButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:background="?android:selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_btn_open_on_phone" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/preference_category_bluetooth_title"
+                    android:src="@drawable/ic_bluetooth"
+                    android:tint="@color/md_theme_dark_onPrimary" />
+            </FrameLayout>
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/connectedToDeviceView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="4dp"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.WearAuthn.Title"
+                tools:text="Connected to\nJoe's laptop" />
+
+            <TextView
+                android:id="@+id/explanationView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:text="@string/connected_to_device_explanation"
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.WearAuthn.Body" />
+
+            <Button
+                android:id="@+id/setupOpenOnPhoneButton"
+                style="@style/Widget.WearAuthn.Button.PillTonal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_open_on_phone"
+                android:drawablePadding="8dp"
+                android:drawableTint="@color/md_theme_dark_onSecondaryContainer"
+                android:text="@string/message_continue_on_phone" />
+
+        </LinearLayout>
+    </ScrollView>
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false">
 
         <TextView
             android:id="@+id/textClock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:textColor="@color/md_theme_dark_onSurface"
             android:textSize="24sp"
+            android:textStyle="bold"
             android:visibility="invisible" />
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

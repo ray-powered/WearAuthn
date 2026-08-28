@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base Material 3 Dark Theme for Wear OS -->
+    <style name="Theme.WearAuthn.MD3" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@color/md_theme_dark_background</item>
+        <item name="android:colorBackground">@color/md_theme_dark_background</item>
+        <item name="android:colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="android:colorAccent">@color/md_theme_dark_primary</item>
+        <item name="android:textColorPrimary">@color/md_theme_dark_onSurface</item>
+        <item name="android:textColorSecondary">@color/md_theme_dark_onSurfaceVariant</item>
+    </style>
+
+    <!-- MD3 Button Styles -->
+    <style name="Widget.WearAuthn.Button.PillPrimary" parent="">
+        <item name="android:background">@drawable/m3_pill_button_primary</item>
+        <item name="android:textColor">@color/md_theme_dark_onPrimary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WearAuthn.Button.PillTonal" parent="">
+        <item name="android:background">@drawable/m3_pill_button_tonal</item>
+        <item name="android:textColor">@color/md_theme_dark_onSecondaryContainer</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WearAuthn.Button.PillSurface" parent="">
+        <item name="android:background">@drawable/m3_pill_button_surface</item>
+        <item name="android:textColor">@color/md_theme_dark_onSurface</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WearAuthn.Button.PillError" parent="">
+        <item name="android:background">@drawable/m3_pill_button_error</item>
+        <item name="android:textColor">@color/md_theme_dark_onErrorContainer</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- MD3 Typography -->
+    <style name="TextAppearance.WearAuthn.Title" parent="@android:style/TextAppearance.Material.Title">
+        <item name="android:textColor">@color/md_theme_dark_onSurface</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.WearAuthn.Body" parent="@android:style/TextAppearance.Material.Body1">
+        <item name="android:textColor">@color/md_theme_dark_onSurfaceVariant</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="TextAppearance.WearAuthn.Label" parent="@android:style/TextAppearance.Material.Caption">
+        <item name="android:textColor">@color/md_theme_dark_onSurfaceVariant</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+</resources>

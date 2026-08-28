@@ -226,11 +226,7 @@ private fun getOrCreateUserInfoEncryptionKeyIfNecessary(): SecretKey? {
         KeyGenParameterSpec.Builder(USER_INFO_ENCRYPTION_KEY_ALIAS, purposes).apply {
             setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            setUserAuthenticationRequired(true)
-            // Long enough that users should not be asked to confirm their device credentials
-            // because of it in normal usage scenarios, but short enough not to trigger undocumented
-            // Keystore failures (at around a week).
-            setUserAuthenticationValidityDurationSeconds(3 * 24 * 60 * 60)
+            setKeySize(256)
         }
     return generateSymmetricKey(
         KeyProperties.KEY_ALGORITHM_AES,
@@ -242,7 +238,7 @@ private fun getOrCreateUserInfoEncryptionKeyIfNecessary(): SecretKey? {
 }
 
 private fun recreateInvalidatedUserInfoEncryptionKey(): SecretKey? {
-    i(TAG) { "User info encryption was no longer valid and has been recreated" }
+    i(TAG) { "User info encryption key was recreated without auth constraint" }
     deleteKey(USER_INFO_ENCRYPTION_KEY_ALIAS)
     return getOrCreateUserInfoEncryptionKeyIfNecessary()
 }
@@ -250,14 +246,14 @@ private fun recreateInvalidatedUserInfoEncryptionKey(): SecretKey? {
 fun encryptWithUserInfoEncryptionKey(data: ByteArray): ByteArray? {
     val secretKey = try {
         getOrCreateUserInfoEncryptionKeyIfNecessary()
-    } catch (e: UnrecoverableEntryException) {
+    } catch (e: Exception) {
         recreateInvalidatedUserInfoEncryptionKey()
     } ?: return null
     val cipher = try {
         Cipher.getInstance(AES_GCM_NO_PADDING).apply {
             init(Cipher.ENCRYPT_MODE, secretKey)
         }
-    } catch (e: KeyPermanentlyInvalidatedException) {
+    } catch (e: Exception) {
         val newSecretKey = recreateInvalidatedUserInfoEncryptionKey()
             ?: return null
         Cipher.getInstance(AES_GCM_NO_PADDING).apply {
@@ -291,10 +287,8 @@ fun decryptWithUserInfoEncryptionKey(data: ByteArray): ByteArray? {
             doFinal(cipherText)
         }
     } catch (error: Exception) {
-        if (error is UnrecoverableEntryException || error is KeyPermanentlyInvalidatedException) {
+        if (error is UnrecoverableEntryException || error is KeyPermanentlyInvalidatedException || error is UserNotAuthenticatedException) {
             recreateInvalidatedUserInfoEncryptionKey()
-        } else if (error is UserNotAuthenticatedException) {
-            throw error
         } else {
             e(TAG, error) { "Failed to decrypt user info:" }
         }

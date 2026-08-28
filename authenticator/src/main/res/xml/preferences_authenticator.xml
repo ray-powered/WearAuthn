@@ -66,14 +66,6 @@
             android:order="@integer/order_device_list_about"
             android:persistent="false"
             android:title="@string/preference_about_title" />
-
-        <Preference
-            android:icon="@drawable/ic_launcher_outline"
-            android:key="@string/preference_support_key"
-            android:order="@integer/order_device_list_support"
-            android:persistent="false"
-            tools:summary="@string/preference_support_not_purchased_summary"
-            tools:title="@string/preference_support_not_purchased_title" />
     </PreferenceCategory>
 
 </PreferenceScreen>

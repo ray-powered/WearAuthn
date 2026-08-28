@@ -147,9 +147,10 @@ class TimedAcceptDenyDialog(context: Context) : Dialog(context) {
     }
 
     fun setIcon(resId: Int) {
+        binding.iconContainer.visibility = if (resId == 0) View.GONE else View.VISIBLE
         binding.iconView.run {
             visibility = if (resId == 0) View.GONE else View.VISIBLE
-            setImageResource(resId)
+            if (resId != 0) setImageResource(resId)
         }
     }
 

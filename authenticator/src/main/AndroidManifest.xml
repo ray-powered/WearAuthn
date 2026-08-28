@@ -39,7 +39,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault"
+        android:theme="@style/Theme.WearAuthn.MD3"
         tools:ignore="GoogleAppIndexingWarning">
         <uses-library
             android:name="com.google.android.wearable"
@@ -94,7 +94,7 @@
 
         <service
             android:name="me.henneke.wearauthn.complication.ShortcutComplicationProviderService"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             android:icon="@drawable/ic_launcher_outline"
             android:label="@string/label_complication_device_shortcut"

@@ -1,12 +1,14 @@
 name: Android CI
 
 on:
+  push:
+    branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -17,4 +19,11 @@ jobs:
           java-version: 17
           distribution: 'zulu'
       - name: Build with Gradle
-        run: ./gradlew buildPlayStoreDebug
+        run: ./gradlew assemblePlayStoreDebug
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: wearauthn-apks
+          path: |
+            authenticator/build/outputs/apk/playStore/debug/*.apk
+            companion/build/outputs/apk/playStore/debug/*.apk

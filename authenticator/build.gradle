@@ -15,10 +15,17 @@ android {
             keyPassword 'hunter2'
         }
         nightlySign {
-            storeFile file('../nightly_keystore.jks')
-            storePassword project.hasProperty("storePassword") ? project.storePassword : ""
-            keyAlias 'key0'
-            keyPassword project.hasProperty("keyPassword") ? project.keyPassword : ""
+            if (project.hasProperty("storePassword") && !project.storePassword.isEmpty()) {
+                storeFile file('../nightly_keystore.jks')
+                storePassword project.storePassword
+                keyAlias 'key0'
+                keyPassword project.hasProperty("keyPassword") ? project.keyPassword : ""
+            } else {
+                storeFile file('../ci_keystore.jks')
+                storePassword 'hunter2'
+                keyAlias 'key0'
+                keyPassword 'hunter2'
+            }
         }
     }
     compileSdk 34

@@ -1,1 +1,1 @@
--keep class com.android.vending.billing.**
+# Project specific ProGuard rules

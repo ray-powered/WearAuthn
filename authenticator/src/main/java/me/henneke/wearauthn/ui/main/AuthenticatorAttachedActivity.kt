@@ -7,13 +7,22 @@ import android.bluetooth.BluetoothProfile
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import android.support.wearable.activity.WearableActivity
 import android.support.wearable.complications.ComplicationProviderService
 import android.support.wearable.complications.ProviderUpdateRequester
-import android.text.Html
-import android.text.TextUtils
-import android.text.format.DateFormat
-import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.wear.ambient.AmbientModeSupport
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material3.*
 import com.google.android.gms.common.util.Hex
 import me.henneke.wearauthn.Logging
 import me.henneke.wearauthn.R
@@ -26,26 +35,30 @@ import me.henneke.wearauthn.bthid.identifier
 import me.henneke.wearauthn.bthid.isBluetoothEnabled
 import me.henneke.wearauthn.complication.ShortcutComplicationProviderService
 import me.henneke.wearauthn.d
-import me.henneke.wearauthn.databinding.ActivityAuthenticatorAttachedBinding
 import me.henneke.wearauthn.e
 import me.henneke.wearauthn.fido.context.AuthenticatorStatus
 import me.henneke.wearauthn.fido.hid.TransactionManager
 import me.henneke.wearauthn.i
 import me.henneke.wearauthn.ui.openUrlOnPhone
+import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 import me.henneke.wearauthn.v
 import me.henneke.wearauthn.w
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 @ExperimentalUnsignedTypes
-class AuthenticatorAttachedActivity : WearableActivity() {
-
-    private lateinit var binding: ActivityAuthenticatorAttachedBinding
+class AuthenticatorAttachedActivity : ComponentActivity(), AmbientModeSupport.AmbientCallbackProvider {
 
     private var transactionManager: TransactionManager? = null
     private var hidDeviceProfile: HidDeviceProfile? = null
     private lateinit var authenticatorContext: HidAuthenticatorContext
+    private var ambientController: AmbientModeSupport.AmbientController? = null
 
-    private lateinit var viewsToHideOnAmbient: List<View>
+    private val connectedDeviceNameState = mutableStateOf("")
+    private val isConnectingState = mutableStateOf(false)
+    private val isAmbientState = mutableStateOf(false)
+    private val ambientTimeState = mutableStateOf("")
 
     private val hidIntrDataListener = object : HidIntrDataListener {
         override fun onIntrData(
@@ -75,23 +88,13 @@ class AuthenticatorAttachedActivity : WearableActivity() {
                 }
                 BluetoothProfile.STATE_CONNECTING -> {
                     i { "Connecting..." }
-                    val connectingToDeviceMessage =
-                        getString(
-                            R.string.connecting_to_device_message,
-                            TextUtils.htmlEncode(device.identifier)
-                        )
-                    binding.connectedToDeviceView.text =
-                        Html.fromHtml(connectingToDeviceMessage, Html.FROM_HTML_MODE_LEGACY)
+                    isConnectingState.value = true
+                    connectedDeviceNameState.value = device.identifier
                 }
                 BluetoothProfile.STATE_CONNECTED -> {
-                    i { "Connected"}
-                    val connectedToDeviceMessage =
-                        getString(
-                            R.string.connected_to_device_message,
-                            TextUtils.htmlEncode(device.identifier)
-                        )
-                    binding.connectedToDeviceView.text =
-                        Html.fromHtml(connectedToDeviceMessage, Html.FROM_HTML_MODE_LEGACY)
+                    i { "Connected" }
+                    isConnectingState.value = false
+                    connectedDeviceNameState.value = device.identifier
                 }
             }
         }
@@ -108,19 +111,92 @@ class AuthenticatorAttachedActivity : WearableActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAuthenticatorAttachedBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setAmbientEnabled()
-        viewsToHideOnAmbient = listOf(binding.explanationView, binding.setupOpenOnPhoneButton)
-        binding.textClock.paint.isAntiAlias = false
-
-        binding.setupOpenOnPhoneButton.setOnClickListener {
-            openUrlOnPhone(this, getString(R.string.url_setup))
-        }
+        ambientController = AmbientModeSupport.attach(this)
 
         authenticatorContext = HidAuthenticatorContext(this)
         hidDeviceProfile = HidDataSender.register(this, hidProfileListener, hidIntrDataListener)
+
+        setContent {
+            WearAuthnTheme {
+                val isAmbient by isAmbientState
+                val ambientTime by ambientTimeState
+                val deviceName by connectedDeviceNameState
+                val isConnecting by isConnectingState
+
+                if (isAmbient) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = ambientTime,
+                            style = MaterialTheme.typography.displayMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                } else {
+                    val listState = rememberScalingLazyListState()
+                    ScreenScaffold(scrollState = listState) {
+                        ScalingLazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 8.dp),
+                            state = listState,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            item {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_btn_bluetooth),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (isConnecting) {
+                                        "Attaching to\n$deviceName…"
+                                    } else {
+                                        "Attached to\n$deviceName"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.connected_to_device_explanation),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Chip(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+                                        openUrlOnPhone(this@AuthenticatorAttachedActivity, getString(R.string.url_setup))
+                                    },
+                                    label = { Text(stringResource(R.string.message_continue_on_phone)) },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_btn_open_on_phone),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    },
+                                    colors = ChipDefaults.chipColors()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -153,7 +229,6 @@ class AuthenticatorAttachedActivity : WearableActivity() {
                 finish()
                 return
             }
-            // Simulate a change to connecting state in order to update the UI immediately.
             hidProfileListener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTING)
             HidDataSender.requestConnect(device)
         } else if (hidDeviceProfile!!.connectedDevices.isEmpty()) {
@@ -162,7 +237,6 @@ class AuthenticatorAttachedActivity : WearableActivity() {
         } else {
             check(hidDeviceProfile!!.connectedDevices.size == 1)
             val connectedDevice = hidDeviceProfile!!.connectedDevices[0]
-            // Simulate a change to connected state for the currently connected device to update UI.
             hidProfileListener.onConnectionStateChanged(
                 connectedDevice,
                 BluetoothProfile.STATE_CONNECTED
@@ -172,43 +246,12 @@ class AuthenticatorAttachedActivity : WearableActivity() {
 
     override fun onStop() {
         super.onStop()
-
-        // Do not disconnect if another activity is launched by the authenticator.
         if (authenticatorContext.status != AuthenticatorStatus.IDLE) {
             w { "onStop() called during authenticator action" }
             return
         }
-
         HidDataSender.requestConnect(null)
         transactionManager = null
-    }
-
-    override fun onEnterAmbient(ambientDetails: Bundle?) {
-        super.onEnterAmbient(ambientDetails)
-        binding.connectedToDeviceView.paint.isAntiAlias = false
-        for (view in viewsToHideOnAmbient) {
-            view.visibility = View.INVISIBLE
-        }
-        binding.textClock.visibility = View.VISIBLE
-        updateTime()
-    }
-
-    private fun updateTime() {
-        binding.textClock.text = DateFormat.getTimeFormat(this).format(Date())
-    }
-
-    override fun onUpdateAmbient() {
-        super.onUpdateAmbient()
-        updateTime()
-    }
-
-    override fun onExitAmbient() {
-        super.onExitAmbient()
-        binding.connectedToDeviceView.paint.isAntiAlias = true
-        for (view in viewsToHideOnAmbient) {
-            view.visibility = View.VISIBLE
-        }
-        binding.textClock.visibility = View.INVISIBLE
     }
 
     override fun onDestroy() {
@@ -216,8 +259,29 @@ class AuthenticatorAttachedActivity : WearableActivity() {
         HidDataSender.unregister(hidProfileListener, hidIntrDataListener)
     }
 
+    private fun updateTime() {
+        ambientTimeState.value = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+    }
+
+    override fun getAmbientCallback(): AmbientModeSupport.AmbientCallback =
+        object : AmbientModeSupport.AmbientCallback() {
+            override fun onEnterAmbient(ambientDetails: Bundle?) {
+                isAmbientState.value = true
+                updateTime()
+            }
+
+            override fun onUpdateAmbient() {
+                updateTime()
+            }
+
+            override fun onExitAmbient() {
+                isAmbientState.value = false
+            }
+        }
+
     companion object : Logging {
         override val TAG = "AuthenticatorAttachedActivity"
         const val EXTRA_DEVICE = "me.henneke.wearauthn.extra.DEVICE"
     }
 }
+

@@ -1,60 +1,172 @@
 package me.henneke.wearauthn.ui.main
 
-import android.app.Dialog
 import android.os.Bundle
-import android.support.wearable.activity.WearableActivity
-import android.widget.TextView
-import kotlinx.coroutines.CoroutineScope
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material3.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.henneke.wearauthn.BuildConfig
 import me.henneke.wearauthn.R
-import me.henneke.wearauthn.databinding.ActivityAboutBinding
 import me.henneke.wearauthn.fido.context.checkAllKeysInHardware
 import me.henneke.wearauthn.ui.openUrlOnPhone
-import kotlin.coroutines.CoroutineContext
+import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 
-class AboutActivity : WearableActivity(), CoroutineScope {
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.IO + SupervisorJob()
-
-    private lateinit var binding: ActivityAboutBinding
+class AboutActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAboutBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.titleView.setText(applicationInfo.labelRes)
-        binding.versionView.text = BuildConfig.VERSION_NAME
-        binding.howToUseOpenOnPhoneButton.setOnClickListener {
-            openUrlOnPhone(this, getString(R.string.url_usage))
-        }
-        binding.privacyButtton.setOnClickListener {
-            showTextDialog(privacyPolicy)
-        }
-        binding.licensesButtton.setOnClickListener {
-            showTextDialog(licensesText)
-        }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        binding.keyStorageView.setText(R.string.message_key_storage_type_unknown)
-        launch {
-            val messageId =
-                if (checkAllKeysInHardware()) R.string.message_key_storage_type_hardware else R.string.message_key_storage_type_software
-            withContext(Dispatchers.Main) {
-                binding.keyStorageView.setText(messageId)
+        setContent {
+            WearAuthnTheme {
+                val listState = rememberScalingLazyListState()
+                var keyStorageRes by remember { mutableStateOf(R.string.message_key_storage_type_unknown) }
+                var textDialogContent by remember { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(Unit) {
+                    val inHardware = withContext(Dispatchers.IO) {
+                        checkAllKeysInHardware()
+                    }
+                    keyStorageRes = if (inHardware) {
+                        R.string.message_key_storage_type_hardware
+                    } else {
+                        R.string.message_key_storage_type_software
+                    }
+                }
+
+                ScreenScaffold(scrollState = listState) {
+                    ScalingLazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
+                        state = listState,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        item {
+                            ListHeader {
+                                Text(
+                                    text = stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        item {
+                            Text(
+                                text = BuildConfig.VERSION_NAME,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Card(
+                                onClick = {},
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.about_how_to_use).replace("<b>", "").replace("</b>", ""),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                        item {
+                            Chip(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    openUrlOnPhone(this@AboutActivity, getString(R.string.url_usage))
+                                },
+                                label = { Text(stringResource(R.string.message_continue_on_phone)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_btn_open_on_phone),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                colors = ChipDefaults.chipColors()
+                            )
+                        }
+                        item {
+                            Card(
+                                onClick = {},
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(keyStorageRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                        item {
+                            Chip(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { textDialogContent = privacyPolicy },
+                                label = { Text(stringResource(R.string.label_privacy)) },
+                                colors = ChipDefaults.chipColors()
+                            )
+                        }
+                        item {
+                            Chip(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { textDialogContent = licensesText },
+                                label = { Text(stringResource(R.string.label_licenses)) },
+                                colors = ChipDefaults.chipColors()
+                            )
+                        }
+                    }
+                }
+
+                // Full text viewer dialog
+                textDialogContent?.let { content ->
+                    val textListState = rememberScalingLazyListState()
+                    ScreenScaffold(scrollState = textListState) {
+                        ScalingLazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            state = textListState,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            item {
+                                Text(
+                                    text = content,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = { textDialogContent = null },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(stringResource(R.string.confirm_lock_continue))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        coroutineContext.cancelChildren()
     }
 
     private val privacyPolicy by lazy {
@@ -68,14 +180,5 @@ class AboutActivity : WearableActivity(), CoroutineScope {
             it.readText()
         }
     }
-
-    private fun showTextDialog(text: String) {
-        Dialog(this).run {
-            setContentView(R.layout.dialog_text)
-            val textView = findViewById<TextView>(R.id.text)
-            textView.text = text
-            show()
-        }
-    }
-
 }
+

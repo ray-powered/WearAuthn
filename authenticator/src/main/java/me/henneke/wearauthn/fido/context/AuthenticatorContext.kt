@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.ResultReceiver
 import android.security.keystore.UserNotAuthenticatedException
 import android.text.Html
@@ -356,7 +357,7 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
                         Intent(context, ConfirmDeviceCredentialActivity::class.java).apply {
                             putExtra(
                                 EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER,
-                                object : ResultReceiver(Handler()) {
+                                object : ResultReceiver(Handler(Looper.getMainLooper())) {
                                     override fun onReceiveResult(
                                         resultCode: Int,
                                         resultData: Bundle?

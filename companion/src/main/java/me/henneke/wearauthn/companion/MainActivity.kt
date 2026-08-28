@@ -23,17 +23,15 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         binding.floatingActionButton.setOnClickListener {
             launch {
                 val nodeNames = try {
-                    val capabilityClient = Wearable.getCapabilityClient(this@MainActivity)
+                    val nodeClient = Wearable.getNodeClient(this@MainActivity)
                     withTimeoutOrNull(1000) {
-                        val fetchNodeInfoTask = capabilityClient.getCapability(
-                            "unlock-complication",
-                            CapabilityClient.FILTER_ALL
-                        )
-                        val nodeInfo = fetchNodeInfoTask.asDeferred().await().nodes
-                        // Strip off the identifiable number at the end of the display name
-                        nodeInfo.map { it.displayName.take(it.displayName.length - 5) }
+                        val connectedNodes = nodeClient.connectedNodes.asDeferred().await()
+                        connectedNodes.map {
+                            if (it.displayName.length > 5) it.displayName.take(it.displayName.length - 5)
+                            else it.displayName
+                        }
                     }
-                } catch (e: ApiException) {
+                } catch (e: Exception) {
                     null
                 } ?: emptyList()
 

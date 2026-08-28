@@ -17,9 +17,6 @@
     <string name="preference_nfc_title">Smartphone über NFC</string>
     <string name="label_support">WearAuthn unterstützen</string>
     <string name="label_privacy">Datenschutz</string>
-    <string name="status_bluetooth_use_via_nfc_instead">Über NFC nutzen</string>
-    <string name="name_unlocked_channel">Freigeschaltete Zusatzfunktionen</string>
-    <string name="description_unlocked_channel">Informiert dich über Zusatzfunktionen, die auf deiner Uhr durch einen In-App-Kauf auf deinem Android-Gerät freigeschaltet wurden.</string>
     <string name="message_continue_on_phone">Auf dem Smartphone fortfahren</string>
     <string name="message_deleted_all_data">WearAuthn zurückgesetzt</string>
     <string name="preference_screen_title_shortcut_picker">Füge deinem Zifferblatt eine Geräteverknüpfung hinzu</string>
@@ -72,14 +69,13 @@
     <string name="message_authenticate_no_credentials">Fehlende Registrierung offenbart</string>
     <string name="message_register_credential_excluded">Bestehende Registrierung%1$s oder Fehler offenbart.</string>
     <string name="prompt_register_credential_excluded">Bestehende Registrierung%1$s oder Fehler offenbaren?</string>
-    <string name="label_complication_device_shortcut">Geräteverknüpfung</string>
-    <string name="preference_support_not_purchased_title">Unterstütze WearAuthn</string>
-    <string name="preference_support_not_purchased_summary">und schalte ein Zifferblatt-Symbol frei</string>
-    <string name="preference_support_purchased_title">Danke für deine Unterstützung!</string>
-    <string name="preference_support_purchased_summary">Letzte Änderungen ansehen</string>
     <string name="preference_log_level_title">Log-Level</string>
     <string name="preference_log_level_dialog_title">Log-Level wählen</string>
     <string name="preference_log_level_dialog_message">Auf \"Debug\" oder \"Verbose\" können Logs persönliche Informationen enthalten.</string>
     <string name="status_bluetooth_permissions_required">Bluetooth-Berechtigung nicht erteilt</string>
+    <string name="confirm_lock_title">Displaysperre erforderlich</string>
+    <string name="confirm_lock_message">Bitte bestätige deine Displaysperre (PIN/Muster), um fortzufahren.</string>
+    <string name="confirm_lock_continue">Weiter</string>
+    <string name="confirm_lock_cancel">Abbrechen</string>
 </resources>
 

@@ -26,10 +26,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
@@ -68,6 +70,22 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     private var connectionStatus by mutableStateOf("")
     private var isConnecting by mutableStateOf(false)
     private var isReconnecting by mutableStateOf(false)
+    private var isAmbient by mutableStateOf(false)
+
+    private val ambientObserver by lazy {
+        AmbientLifecycleObserver(
+            this,
+            object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+                override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+                    isAmbient = true
+                }
+
+                override fun onExitAmbient() {
+                    isAmbient = false
+                }
+            },
+        )
+    }
 
     private val hidIntrDataListener = object : HidIntrDataListener {
         override fun onIntrData(
@@ -127,6 +145,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycle.addObserver(ambientObserver)
         setContent {
             WearAuthnTheme {
                 BackHandler { finish() }
@@ -142,7 +161,9 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                                 modifier = Modifier
                                     .size(44.dp)
                                     .background(
-                                        color = if (isConnecting || isReconnecting) {
+                                        color = if (isAmbient) {
+                                            Color.Transparent
+                                        } else if (isConnecting || isReconnecting) {
                                             MaterialTheme.colorScheme.surfaceContainerHigh
                                         } else {
                                             MaterialTheme.colorScheme.primaryContainer
@@ -154,7 +175,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_bluetooth),
                                     contentDescription = null,
-                                    tint = if (isConnecting || isReconnecting) {
+                                    tint = if (isAmbient || isConnecting || isReconnecting) {
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                     } else {
                                         MaterialTheme.colorScheme.primary
@@ -169,7 +190,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                             text = connectionStatus.ifEmpty {
                                 stringResource(R.string.status_bluetooth_connected)
                             },
-                            color = if (isConnecting || isReconnecting) {
+                            color = if (isAmbient || isConnecting || isReconnecting) {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             } else {
                                 MaterialTheme.colorScheme.primary
@@ -192,15 +213,17 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                                 .padding(horizontal = 18.dp, vertical = 4.dp),
                         )
                     }
-                    item {
-                        Spacer(modifier = Modifier.height(6.dp))
-                    }
-                    item {
-                        WearButton(
-                            label = stringResource(R.string.action_disconnect),
-                            onClick = { finish() },
-                            colors = ButtonDefaults.filledTonalButtonColors(),
-                        )
+                    if (!isAmbient) {
+                        item {
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                        item {
+                            WearButton(
+                                label = stringResource(R.string.action_disconnect),
+                                onClick = { finish() },
+                                colors = ButtonDefaults.filledTonalButtonColors(),
+                            )
+                        }
                     }
                 }
             }

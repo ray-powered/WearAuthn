@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.nfc.NfcManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper

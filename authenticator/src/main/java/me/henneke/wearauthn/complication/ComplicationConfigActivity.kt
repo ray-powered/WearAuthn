@@ -70,6 +70,7 @@ class ComplicationConfigActivity : ComponentActivity() {
     }
 
     companion object {
+        @SuppressLint("MissingPermission")
         private fun deviceIcon(device: BluetoothDevice): Int = when (device.bluetoothClass?.majorDeviceClass) {
             BluetoothClass.Device.Major.AUDIO_VIDEO -> R.drawable.ic_btn_headset
             BluetoothClass.Device.Major.COMPUTER -> R.drawable.ic_btn_computer

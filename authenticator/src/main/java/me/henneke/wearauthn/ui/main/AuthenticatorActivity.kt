@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.MaterialTheme
@@ -76,22 +75,6 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     private var receiverRegistered = false
     private var hidDeviceProfile: HidDeviceProfile? = null
     private var bluetoothNotice: String? = null
-    private var hasUpdatedInAmbientMode = false
-
-    private val ambientObserver by lazy {
-        AmbientLifecycleObserver(
-            this,
-            object : AmbientLifecycleObserver.AmbientLifecycleCallback {
-                override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
-                    hasUpdatedInAmbientMode = false
-                }
-
-                override fun onUpdateAmbient() {
-                    if (hasUpdatedInAmbientMode) finish() else hasUpdatedInAmbientMode = true
-                }
-            },
-        )
-    }
 
     private val activityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { refreshState() }
@@ -110,7 +93,6 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycle.addObserver(ambientObserver)
         setContent {
             WearAuthnTheme {
                 when (screen) {

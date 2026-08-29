@@ -10,14 +10,12 @@ import android.os.Build
 import android.os.Bundle
 import android.support.wearable.complications.ComplicationProviderService
 import android.support.wearable.complications.ProviderUpdateRequester
-import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
@@ -58,7 +55,6 @@ import me.henneke.wearauthn.ui.WearListScreen
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 import me.henneke.wearauthn.v
 import me.henneke.wearauthn.w
-import java.util.Date
 
 @ExperimentalUnsignedTypes
 class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
@@ -72,26 +68,6 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     private var connectionStatus by mutableStateOf("")
     private var isConnecting by mutableStateOf(false)
     private var isReconnecting by mutableStateOf(false)
-    private var isAmbient by mutableStateOf(false)
-    private var ambientTime by mutableStateOf("")
-
-    private val ambientObserver by lazy {
-        AmbientLifecycleObserver(
-            this,
-            object : AmbientLifecycleObserver.AmbientLifecycleCallback {
-                override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
-                    isAmbient = true
-                    updateTime()
-                }
-
-                override fun onUpdateAmbient() = updateTime()
-
-                override fun onExitAmbient() {
-                    isAmbient = false
-                }
-            },
-        )
-    }
 
     private val hidIntrDataListener = object : HidIntrDataListener {
         override fun onIntrData(
@@ -151,87 +127,80 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycle.addObserver(ambientObserver)
         setContent {
             WearAuthnTheme {
                 BackHandler { finish() }
-                if (isAmbient) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = ambientTime, style = MaterialTheme.typography.displayMedium)
-                    }
-                } else {
-                    WearListScreen(title = deviceName ?: stringResource(R.string.app_name)) {
-                        item {
+                WearListScreen(title = deviceName ?: stringResource(R.string.app_name)) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp, bottom = 6.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp, bottom = 6.dp),
+                                    .size(44.dp)
+                                    .background(
+                                        color = if (isConnecting || isReconnecting) {
+                                            MaterialTheme.colorScheme.surfaceContainerHigh
+                                        } else {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        },
+                                        shape = CircleShape,
+                                    ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(
-                                            color = if (isConnecting || isReconnecting) {
-                                                MaterialTheme.colorScheme.surfaceContainerHigh
-                                            } else {
-                                                MaterialTheme.colorScheme.primaryContainer
-                                            },
-                                            shape = CircleShape,
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_bluetooth),
-                                        contentDescription = null,
-                                        tint = if (isConnecting || isReconnecting) {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        } else {
-                                            MaterialTheme.colorScheme.primary
-                                        },
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_bluetooth),
+                                    contentDescription = null,
+                                    tint = if (isConnecting || isReconnecting) {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    },
+                                    modifier = Modifier.size(24.dp),
+                                )
                             }
                         }
-                        item {
-                            Text(
-                                text = connectionStatus.ifEmpty {
-                                    stringResource(R.string.status_bluetooth_connected)
-                                },
-                                color = if (isConnecting || isReconnecting) {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                } else {
-                                    MaterialTheme.colorScheme.primary
-                                },
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                            )
-                        }
-                        item {
-                            Text(
-                                text = stringResource(R.string.connected_to_device_explanation),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 18.dp, vertical = 4.dp),
-                            )
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(6.dp))
-                        }
-                        item {
-                            WearButton(
-                                label = stringResource(R.string.action_disconnect),
-                                onClick = { finish() },
-                                colors = ButtonDefaults.filledTonalButtonColors(),
-                            )
-                        }
+                    }
+                    item {
+                        Text(
+                            text = connectionStatus.ifEmpty {
+                                stringResource(R.string.status_bluetooth_connected)
+                            },
+                            color = if (isConnecting || isReconnecting) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+                    item {
+                        Text(
+                            text = stringResource(R.string.connected_to_device_explanation),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 4.dp),
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+                    item {
+                        WearButton(
+                            label = stringResource(R.string.action_disconnect),
+                            onClick = { finish() },
+                            colors = ButtonDefaults.filledTonalButtonColors(),
+                        )
                     }
                 }
             }
@@ -301,10 +270,6 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     override fun onDestroy() {
         HidDataSender.unregister(hidProfileListener, hidIntrDataListener)
         super.onDestroy()
-    }
-
-    private fun updateTime() {
-        ambientTime = DateFormat.getTimeFormat(this).format(Date())
     }
 
     companion object {

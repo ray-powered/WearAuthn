@@ -5,6 +5,8 @@
     <string name="aiddescription">FIDO2/U2F Security Key</string>
     <string name="connected_to_device_message"><![CDATA[Attached to<br><b>%1$s</b>]]></string>
     <string name="connecting_to_device_message"><![CDATA[Attaching to<br><b>%1$s</b>…]]></string>
+    <string name="connected_to_device_plain">Attached to\n%1$s</string>
+    <string name="connecting_to_device_plain">Attaching to\n%1$s…</string>
     <string name="connected_to_device_explanation">Use as if a USB security key were attached to that device.\nHelp with common issues is available on your phone.</string>
     <string name="preference_about_key" translatable="false">preference_about</string>
     <string name="preference_bluetooth_settings_key" translatable="false">preference_bluetooth_settings</string>
@@ -46,8 +48,6 @@
     <string name="status_bluetooth_use_via_nfc_instead">Use via NFC instead</string>
     <string name="preference_screen_title_shortcut_picker">Add a device shortcut to your watch face</string>
     <string name="message_continue_on_phone">Continue on your phone</string>
-    <string name="name_unlocked_channel">Unlocked functionality</string>
-    <string name="description_unlocked_channel">Informs you about functionality unlocked on your watch by in-app purchases made on your phone.</string>
     <string name="preference_credential_management_key" translatable="false">preference_credential_management</string>
     <string name="button_delete">Delete</string>
     <string name="preference_manage_credentials_summary_disabled">Enable single-factor mode first</string>
@@ -85,14 +85,19 @@
     <string name="prompt_register">Register%1$s%2$s?%3$s</string>
     <string name="prompt_authenticate">Authenticate%1$s%2$s?%3$s</string>
     <string name="label_complication_device_shortcut">Device shortcut</string>
-    <string name="preference_support_key" translatable="false">preference_support</string>
-    <string name="preference_support_not_purchased_title">Support WearAuthn</string>
-    <string name="preference_support_not_purchased_summary">and unlock a watch face shortcut</string>
-    <string name="preference_support_purchased_title">Thanks for your support!</string>
-    <string name="preference_support_purchased_summary">View recent changes</string>
     <string name="preference_log_level_key" translatable="false">preference_log_level</string>
     <string name="preference_log_level_title">Log level</string>
     <string name="preference_log_level_dialog_title">Choose a log level</string>
     <string name="preference_log_level_dialog_message">Logs may contain personal information on \"Debug\" or \"Verbose\".</string>
     <string name="status_bluetooth_permissions_required">Bluetooth permission not granted</string>
+    <string name="generic_continue">Continue</string>
+    <string name="generic_cancel">Cancel</string>
+    <string name="prompt_device_credential_title">Verify it\'s you</string>
+    <string name="prompt_device_credential_message">WearAuthn needs your screen lock for this request. The system PIN screen opens next. Successful verification is reused briefly, so you should only need to enter it once.</string>
+    <string name="prompt_device_credential_system_title">Verify for WearAuthn</string>
+    <string name="prompt_device_credential_system_message">Confirm your watch screen lock to continue.</string>
+    <string name="status_selected">Selected</string>
+    <string name="status_no_paired_devices">No compatible paired devices</string>
+    <string name="credential_chooser_title">Log in as</string>
+    <string name="status_timeout_seconds">Times out in %1$d s</string>
 </resources>

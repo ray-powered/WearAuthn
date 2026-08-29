@@ -7,12 +7,15 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
+import android.os.SystemClock
 import android.security.keystore.UserNotAuthenticatedException
 import android.text.Html
 import android.text.Spanned
 import androidx.annotation.WorkerThread
 import androidx.core.content.edit
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.henneke.wearauthn.*
 import me.henneke.wearauthn.Logging.Companion.i
 import me.henneke.wearauthn.fido.context.AuthenticatorAction.*
@@ -349,37 +352,44 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
     private suspend fun confirmDeviceCredentialInternal(updateAuthenticatorStatus: Boolean) {
         if (updateAuthenticatorStatus)
             status = AuthenticatorStatus.WAITING_FOR_UP
-        withContext(Dispatchers.Main) {
-            val confirmCredentialJob = launch {
-                suspendCoroutine<Nothing?> { continuation ->
-                    val intent =
-                        Intent(context, ConfirmDeviceCredentialActivity::class.java).apply {
-                            putExtra(
-                                EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER,
-                                object : ResultReceiver(Handler()) {
-                                    override fun onReceiveResult(
-                                        resultCode: Int,
-                                        resultData: Bundle?
-                                    ) {
-                                        continuation.resume(null)
+        try {
+            credentialConfirmationMutex.withLock {
+                val recentlyConfirmed =
+                    lastCredentialConfirmationAt > 0 &&
+                        SystemClock.elapsedRealtime() - lastCredentialConfirmationAt < CREDENTIAL_REUSE_MS
+                if (!recentlyConfirmed || context.keyguardManager?.isDeviceLocked != false) {
+                    val confirmed = withContext(Dispatchers.Main) {
+                        val confirmCredentialJob = async {
+                            suspendCoroutine<Boolean> { continuation ->
+                                val intent =
+                                    Intent(context, ConfirmDeviceCredentialActivity::class.java).apply {
+                                        putExtra(
+                                            EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER,
+                                            object : ResultReceiver(Handler(context.mainLooper)) {
+                                                override fun onReceiveResult(
+                                                    resultCode: Int,
+                                                    resultData: Bundle?,
+                                                ) {
+                                                    continuation.resume(resultCode == Activity.RESULT_OK)
+                                                }
+                                            },
+                                        )
+                                        if (context !is Activity) flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                     }
-                                })
-                            // Starting with Android P (due to a bug, Oreo is excepted),
-                            // FLAG_ACTIVITY_NEW_TASK needs to be set when launching an activity
-                            // from a non-activity context.
-                            // https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-wear-9.0.0_r14/core/java/android/app/ContextImpl.java#907
-                            if (context !is Activity)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                context.startActivity(intent)
+                            }
                         }
-                    context.startActivity(intent)
+                        delay(1_000)
+                        wink(context)
+                        confirmCredentialJob.await()
+                    }
+                    if (confirmed) lastCredentialConfirmationAt = SystemClock.elapsedRealtime()
                 }
             }
-            delay(1_000)
-            wink(context)
-            confirmCredentialJob.join()
+        } finally {
+            if (updateAuthenticatorStatus)
+                status = AuthenticatorStatus.PROCESSING
         }
-        if (updateAuthenticatorStatus)
-            status = AuthenticatorStatus.PROCESSING
     }
 
     suspend fun chooseCredential(credentials: List<Credential>): Credential? {
@@ -535,6 +545,10 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
 
     companion object : Logging {
         override val TAG = "AuthenticatorContext"
+
+        private const val CREDENTIAL_REUSE_MS = 30_000L
+        private val credentialConfirmationMutex = Mutex()
+        private var lastCredentialConfirmationAt = 0L
 
         fun initAuthenticator(context: Context) {
             if (isKeystoreEmpty) {

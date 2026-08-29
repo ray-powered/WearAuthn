@@ -4,6 +4,8 @@
     <string name="aiddescription">WebAuthn/U2F-Sicherheitsschlüssel</string>
     <string name="connected_to_device_message"><![CDATA[Verbunden mit<br><b>%1$s</b>]]></string>
     <string name="connecting_to_device_message"><![CDATA[Wird verbunden mit<br><b>%1$s</b>…]]></string>
+    <string name="connected_to_device_plain">Verbunden mit\n%1$s</string>
+    <string name="connecting_to_device_plain">Wird verbunden mit\n%1$s…</string>
     <string name="message_key_storage_type_unknown">Speicherung der Anmeldedaten: Wird ausgelesen…</string>
     <string name="message_key_storage_type_software">Speicherung der Anmeldedaten: Software</string>
     <string name="message_key_storage_type_hardware">Speicherung der Anmeldedaten: Hardware</string>
@@ -18,8 +20,6 @@
     <string name="label_support">WearAuthn unterstützen</string>
     <string name="label_privacy">Datenschutz</string>
     <string name="status_bluetooth_use_via_nfc_instead">Über NFC nutzen</string>
-    <string name="name_unlocked_channel">Freigeschaltete Zusatzfunktionen</string>
-    <string name="description_unlocked_channel">Informiert dich über Zusatzfunktionen, die auf deiner Uhr durch einen In-App-Kauf auf deinem Android-Gerät freigeschaltet wurden.</string>
     <string name="message_continue_on_phone">Auf dem Smartphone fortfahren</string>
     <string name="message_deleted_all_data">WearAuthn zurückgesetzt</string>
     <string name="preference_screen_title_shortcut_picker">Füge deinem Zifferblatt eine Geräteverknüpfung hinzu</string>
@@ -73,13 +73,18 @@
     <string name="message_register_credential_excluded">Bestehende Registrierung%1$s oder Fehler offenbart.</string>
     <string name="prompt_register_credential_excluded">Bestehende Registrierung%1$s oder Fehler offenbaren?</string>
     <string name="label_complication_device_shortcut">Geräteverknüpfung</string>
-    <string name="preference_support_not_purchased_title">Unterstütze WearAuthn</string>
-    <string name="preference_support_not_purchased_summary">und schalte ein Zifferblatt-Symbol frei</string>
-    <string name="preference_support_purchased_title">Danke für deine Unterstützung!</string>
-    <string name="preference_support_purchased_summary">Letzte Änderungen ansehen</string>
     <string name="preference_log_level_title">Log-Level</string>
     <string name="preference_log_level_dialog_title">Log-Level wählen</string>
     <string name="preference_log_level_dialog_message">Auf \"Debug\" oder \"Verbose\" können Logs persönliche Informationen enthalten.</string>
     <string name="status_bluetooth_permissions_required">Bluetooth-Berechtigung nicht erteilt</string>
+    <string name="generic_continue">Weiter</string>
+    <string name="generic_cancel">Abbrechen</string>
+    <string name="prompt_device_credential_title">Identität bestätigen</string>
+    <string name="prompt_device_credential_message">WearAuthn benötigt für diese Anfrage deine Displaysperre. Als Nächstes öffnet sich die System-PIN-Eingabe. Eine erfolgreiche Bestätigung wird kurz wiederverwendet, sodass du die PIN nur einmal eingeben solltest.</string>
+    <string name="prompt_device_credential_system_title">Für WearAuthn bestätigen</string>
+    <string name="prompt_device_credential_system_message">Bestätige die Displaysperre deiner Uhr, um fortzufahren.</string>
+    <string name="status_selected">Ausgewählt</string>
+    <string name="status_no_paired_devices">Keine kompatiblen gekoppelten Geräte</string>
+    <string name="credential_chooser_title">Anmelden als</string>
+    <string name="status_timeout_seconds">Zeitüberschreitung in %1$d s</string>
 </resources>
-

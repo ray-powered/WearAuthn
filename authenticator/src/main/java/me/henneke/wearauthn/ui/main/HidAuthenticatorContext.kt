@@ -1,7 +1,6 @@
 package me.henneke.wearauthn.ui.main
 
 import android.app.Activity
-import android.content.DialogInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext

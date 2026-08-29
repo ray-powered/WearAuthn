@@ -240,7 +240,7 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
         hasBtPermissionsState.value = hasPerms
 
         val btAdapter = bluetoothAdapter
-        val isBtOn = btAdapter?.state == BluetoothAdapter.STATE_ON
+        val isBtOn = if (hasPerms) btAdapter?.state == BluetoothAdapter.STATE_ON else false
         isBtEnabledState.value = isBtOn
 
         if (hasPerms && isBtOn && btAdapter != null) {

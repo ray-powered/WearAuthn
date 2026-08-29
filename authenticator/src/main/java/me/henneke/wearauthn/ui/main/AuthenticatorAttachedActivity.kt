@@ -111,7 +111,9 @@ class AuthenticatorAttachedActivity : FragmentActivity(), AmbientModeSupport.Amb
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ambientController = AmbientModeSupport.attach(this)
+        try {
+            ambientController = AmbientModeSupport.attach(this)
+        } catch (_: Exception) {}
 
         authenticatorContext = HidAuthenticatorContext(this)
         hidDeviceProfile = HidDataSender.register(this, hidProfileListener, hidIntrDataListener)

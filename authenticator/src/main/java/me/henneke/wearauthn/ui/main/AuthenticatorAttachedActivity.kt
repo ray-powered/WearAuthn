@@ -147,7 +147,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                         item {
                             WearButton(
                                 label = stringResource(R.string.message_continue_on_phone),
-                                iconRes = R.drawable.ic_btn_open_on_phone,
+                                iconRes = R.drawable.ic_open_on_phone,
                                 onClick = { openUrlOnPhone(this@AuthenticatorAttachedActivity, getString(R.string.url_setup)) },
                             )
                         }

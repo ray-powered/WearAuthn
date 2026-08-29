@@ -46,7 +46,7 @@ class AboutActivity : ComponentActivity() {
                         item {
                             WearButton(
                                 label = stringResource(R.string.message_continue_on_phone),
-                                iconRes = R.drawable.ic_btn_open_on_phone,
+                                iconRes = R.drawable.ic_open_on_phone,
                                 onClick = { openUrlOnPhone(this@AboutActivity, getString(R.string.url_usage)) },
                             )
                         }

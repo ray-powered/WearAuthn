@@ -206,11 +206,20 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
         )
     }
 
+    @SuppressLint("MissingPermission")
     private fun openBluetoothSettings() {
-        if (bluetoothAdapter?.isEnabled == true) {
-            startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
-        } else {
-            activityResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        if (!hasBluetoothPermissions) {
+            requestBluetoothPermissions()
+            return
+        }
+        try {
+            if (bluetoothAdapter?.isEnabled == true) {
+                startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            } else {
+                activityResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            }
+        } catch (_: SecurityException) {
+            showToast(getString(R.string.status_bluetooth_permissions_required))
         }
     }
 
@@ -254,29 +263,41 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     private fun refreshState() {
         val adapter = bluetoothAdapter
         val profile = hidDeviceProfile
-        val devices = if (hasBluetoothPermissions && adapter != null) {
-            adapter.bondedDevices
-                .filter { it.canUseAuthenticator }
-                .map { device ->
-                    val connectionState = profile?.getConnectionState(device)
-                        ?: BluetoothProfile.STATE_DISCONNECTED
-                    HostDeviceState(
-                        device = device,
-                        name = device.identifier,
-                        icon = deviceIcon(device),
-                        enabled = device.canUseAuthenticatorViaBluetooth &&
-                            HidDataSender.isAppRegistered &&
-                            connectionState != BluetoothProfile.STATE_CONNECTING &&
-                            connectionState != BluetoothProfile.STATE_DISCONNECTING,
-                        status = when (connectionState) {
-                            BluetoothProfile.STATE_CONNECTING -> getString(R.string.status_bluetooth_connecting)
-                            BluetoothProfile.STATE_CONNECTED -> getString(R.string.status_bluetooth_connected)
-                            else -> if (device.canUseAuthenticatorViaBluetooth) null
-                                else getString(R.string.status_bluetooth_use_via_nfc_instead)
-                        },
-                    )
-                }
-                .sortedWith(compareBy<HostDeviceState> { !it.enabled }.thenBy { it.name })
+        var bluetoothAccessAvailable = hasBluetoothPermissions
+        var bluetoothEnabled = false
+        var discoverable = false
+        val devices = if (bluetoothAccessAvailable && adapter != null) {
+            try {
+                bluetoothEnabled = adapter.isEnabled
+                discoverable = adapter.scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE
+                adapter.bondedDevices
+                    .filter { it.canUseAuthenticator }
+                    .map { device ->
+                        val connectionState = profile?.getConnectionState(device)
+                            ?: BluetoothProfile.STATE_DISCONNECTED
+                        HostDeviceState(
+                            device = device,
+                            name = device.identifier,
+                            icon = deviceIcon(device),
+                            enabled = device.canUseAuthenticatorViaBluetooth &&
+                                HidDataSender.isAppRegistered &&
+                                connectionState != BluetoothProfile.STATE_CONNECTING &&
+                                connectionState != BluetoothProfile.STATE_DISCONNECTING,
+                            status = when (connectionState) {
+                                BluetoothProfile.STATE_CONNECTING -> getString(R.string.status_bluetooth_connecting)
+                                BluetoothProfile.STATE_CONNECTED -> getString(R.string.status_bluetooth_connected)
+                                else -> if (device.canUseAuthenticatorViaBluetooth) null
+                                    else getString(R.string.status_bluetooth_use_via_nfc_instead)
+                            },
+                        )
+                    }
+                    .sortedWith(compareBy<HostDeviceState> { !it.enabled }.thenBy { it.name })
+            } catch (_: SecurityException) {
+                bluetoothAccessAvailable = false
+                bluetoothEnabled = false
+                discoverable = false
+                emptyList()
+            }
         } else {
             emptyList()
         }
@@ -287,10 +308,9 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
             LogLevel.Disabled.name,
         ) ?: LogLevel.Disabled.name
         state = MainMenuState(
-            bluetoothEnabled = adapter?.isEnabled == true,
-            hasBluetoothPermission = hasBluetoothPermissions,
-            discoverable = hasBluetoothPermissions &&
-                adapter?.scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE,
+            bluetoothEnabled = bluetoothEnabled,
+            hasBluetoothPermission = bluetoothAccessAvailable,
+            discoverable = discoverable,
             devices = devices,
             nfcEnabled = nfcAdapter?.isEnabled,
             userVerificationState = verificationState,
@@ -338,11 +358,11 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     companion object {
         @SuppressLint("MissingPermission")
         private fun deviceIcon(device: BluetoothDevice): Int = when (device.bluetoothClass?.majorDeviceClass) {
-            BluetoothClass.Device.Major.AUDIO_VIDEO -> R.drawable.ic_btn_headset
-            BluetoothClass.Device.Major.COMPUTER -> R.drawable.ic_btn_computer
-            BluetoothClass.Device.Major.PHONE -> R.drawable.ic_btn_phone
-            BluetoothClass.Device.Major.WEARABLE -> R.drawable.ic_btn_watch
-            else -> R.drawable.ic_btn_bluetooth
+            BluetoothClass.Device.Major.AUDIO_VIDEO -> R.drawable.ic_headset
+            BluetoothClass.Device.Major.COMPUTER -> R.drawable.ic_computer
+            BluetoothClass.Device.Major.PHONE -> R.drawable.ic_phone
+            BluetoothClass.Device.Major.WEARABLE -> R.drawable.ic_watch
+            else -> R.drawable.ic_bluetooth
         }
     }
 }
@@ -387,7 +407,7 @@ private fun MainMenu(
             item {
                 WearButton(
                     label = stringResource(R.string.bluetooth_permissions_explanation),
-                    iconRes = R.drawable.ic_btn_bluetooth,
+                    iconRes = R.drawable.ic_bluetooth,
                     onClick = onBluetoothPermissions,
                 )
             }
@@ -410,7 +430,7 @@ private fun MainMenu(
                 secondaryLabel = if (state.bluetoothEnabled) {
                     if (state.devices.isEmpty()) stringResource(R.string.status_bluetooth_tap_and_pair) else null
                 } else stringResource(R.string.status_bluetooth_tap_to_enable),
-                iconRes = R.drawable.ic_btn_settings,
+                iconRes = R.drawable.ic_settings,
                 onClick = onBluetoothSettings,
             )
         }
@@ -441,7 +461,7 @@ private fun MainMenu(
                         null -> R.string.status_nfc_not_available
                     },
                 ),
-                iconRes = if (state.nfcEnabled == false) R.drawable.ic_btn_settings else R.drawable.ic_btn_phone,
+                iconRes = if (state.nfcEnabled == false) R.drawable.ic_settings else R.drawable.ic_phone,
                 enabled = state.nfcEnabled != null,
                 onClick = onNfc,
             )
@@ -468,7 +488,7 @@ private fun MainMenu(
                 secondaryLabel = if (state.userVerificationState == false) {
                     stringResource(R.string.preference_manage_credentials_summary_disabled)
                 } else null,
-                iconRes = R.drawable.ic_btn_key,
+                iconRes = R.drawable.ic_key,
                 enabled = state.userVerificationState != false,
                 onClick = onCredentials,
             )
@@ -476,7 +496,7 @@ private fun MainMenu(
         item {
             WearButton(
                 label = stringResource(R.string.preference_about_title),
-                iconRes = R.drawable.ic_btn_info,
+                iconRes = R.drawable.ic_info,
                 onClick = onAbout,
             )
         }
@@ -485,7 +505,7 @@ private fun MainMenu(
                 WearButton(
                     label = stringResource(R.string.preference_log_level_title),
                     secondaryLabel = state.logLevel,
-                    iconRes = R.drawable.ic_btn_bug_report,
+                    iconRes = R.drawable.ic_bug_report,
                     onClick = onLogLevel,
                 )
             }

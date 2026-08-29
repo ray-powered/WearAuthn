@@ -12,18 +12,29 @@ import android.support.wearable.complications.ComplicationProviderService
 import android.support.wearable.complications.ProviderUpdateRequester
 import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.ambient.AmbientLifecycleObserver
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.google.android.gms.common.util.Hex
@@ -42,10 +53,8 @@ import me.henneke.wearauthn.e
 import me.henneke.wearauthn.fido.context.AuthenticatorStatus
 import me.henneke.wearauthn.fido.hid.TransactionManager
 import me.henneke.wearauthn.i
-import me.henneke.wearauthn.ui.WearBodyItem
 import me.henneke.wearauthn.ui.WearButton
 import me.henneke.wearauthn.ui.WearListScreen
-import me.henneke.wearauthn.ui.openUrlOnPhone
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 import me.henneke.wearauthn.v
 import me.henneke.wearauthn.w
@@ -59,7 +68,10 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     private var transactionManager: TransactionManager? = null
     private var hidDeviceProfile: HidDeviceProfile? = null
     private lateinit var authenticatorContext: HidAuthenticatorContext
-    private var connectionText by mutableStateOf("")
+    private var deviceName by mutableStateOf<String?>(null)
+    private var connectionStatus by mutableStateOf("")
+    private var isConnecting by mutableStateOf(false)
+    private var isReconnecting by mutableStateOf(false)
     private var isAmbient by mutableStateOf(false)
     private var ambientTime by mutableStateOf("")
 
@@ -103,21 +115,24 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     private val hidProfileListener = object : HidDataSender.ProfileListener {
         override fun onConnectionStateChanged(device: BluetoothDevice, state: Int) {
             runOnUiThread {
-                connectionText = when (state) {
-                    BluetoothProfile.STATE_CONNECTING -> getString(
-                        R.string.connecting_to_device_plain,
-                        device.identifier,
-                    )
-                    BluetoothProfile.STATE_CONNECTED -> getString(
-                        R.string.connected_to_device_plain,
-                        device.identifier,
-                    )
-                    else -> connectionText
-                }
-                if (state == BluetoothProfile.STATE_DISCONNECTING ||
-                    state == BluetoothProfile.STATE_DISCONNECTED
-                ) {
-                    connectionText = getString(R.string.status_bluetooth_reconnecting)
+                deviceName = device.identifier
+                when (state) {
+                    BluetoothProfile.STATE_CONNECTING -> {
+                        connectionStatus = getString(R.string.status_bluetooth_connecting)
+                        isConnecting = true
+                        isReconnecting = false
+                    }
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        connectionStatus = getString(R.string.status_bluetooth_connected)
+                        isConnecting = false
+                        isReconnecting = false
+                    }
+                    BluetoothProfile.STATE_DISCONNECTING,
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        connectionStatus = getString(R.string.status_bluetooth_reconnecting)
+                        isConnecting = false
+                        isReconnecting = true
+                    }
                 }
             }
         }
@@ -125,7 +140,8 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
         override fun onAppStatusChanged(registered: Boolean) {
             if (!registered) {
                 runOnUiThread {
-                    connectionText = getString(R.string.status_bluetooth_reconnecting)
+                    connectionStatus = getString(R.string.status_bluetooth_reconnecting)
+                    isReconnecting = true
                 }
             }
         }
@@ -138,23 +154,82 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
         lifecycle.addObserver(ambientObserver)
         setContent {
             WearAuthnTheme {
+                BackHandler { finish() }
                 if (isAmbient) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(text = ambientTime, style = MaterialTheme.typography.displayMedium)
                     }
                 } else {
-                    WearListScreen(title = connectionText.ifEmpty { stringResource(R.string.app_name) }) {
+                    WearListScreen(title = deviceName ?: stringResource(R.string.app_name)) {
                         item {
-                            WearBodyItem(
-                                text = stringResource(R.string.connected_to_device_explanation),
-                                modifier = Modifier.padding(vertical = 4.dp),
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp, bottom = 6.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(
+                                            color = if (isConnecting || isReconnecting) {
+                                                MaterialTheme.colorScheme.surfaceContainerHigh
+                                            } else {
+                                                MaterialTheme.colorScheme.primaryContainer
+                                            },
+                                            shape = CircleShape,
+                                        ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_bluetooth),
+                                        contentDescription = null,
+                                        tint = if (isConnecting || isReconnecting) {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+                        }
+                        item {
+                            Text(
+                                text = connectionStatus.ifEmpty {
+                                    stringResource(R.string.status_bluetooth_connected)
+                                },
+                                color = if (isConnecting || isReconnecting) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
                             )
                         }
                         item {
+                            Text(
+                                text = stringResource(R.string.connected_to_device_explanation),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 18.dp, vertical = 4.dp),
+                            )
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                        item {
                             WearButton(
-                                label = stringResource(R.string.message_continue_on_phone),
-                                iconRes = R.drawable.ic_open_on_phone,
-                                onClick = { openUrlOnPhone(this@AuthenticatorAttachedActivity, getString(R.string.url_setup)) },
+                                label = stringResource(R.string.action_disconnect),
+                                onClick = { finish() },
+                                colors = ButtonDefaults.filledTonalButtonColors(),
                             )
                         }
                     }
@@ -189,12 +264,21 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                 finish()
                 return
             }
+            deviceName = device.identifier
+            connectionStatus = getString(R.string.status_bluetooth_connecting)
+            isConnecting = true
+            isReconnecting = false
             hidProfileListener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTING)
             HidDataSender.requestConnect(device)
         } else if (profile.connectedDevices.isEmpty()) {
-            connectionText = getString(R.string.status_bluetooth_reconnecting)
+            connectionStatus = getString(R.string.status_bluetooth_reconnecting)
+            isReconnecting = true
         } else {
             val connectedDevice = profile.connectedDevices.first()
+            deviceName = connectedDevice.identifier
+            connectionStatus = getString(R.string.status_bluetooth_connected)
+            isConnecting = false
+            isReconnecting = false
             hidProfileListener.onConnectionStateChanged(connectedDevice, BluetoothProfile.STATE_CONNECTED)
         }
     }

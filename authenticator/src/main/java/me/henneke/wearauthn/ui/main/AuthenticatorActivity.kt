@@ -445,9 +445,7 @@ private fun MainMenu(
         }
         if (state.hasBluetoothPermission && state.bluetoothEnabled) {
             when (state.hidRegistrationState) {
-                HidDataSender.AppRegistrationState.READY -> item {
-                    WearBodyItem(text = stringResource(R.string.status_bluetooth_key_ready))
-                }
+                HidDataSender.AppRegistrationState.READY -> Unit
                 HidDataSender.AppRegistrationState.FAILED -> item {
                     WearButton(
                         label = stringResource(R.string.status_bluetooth_key_unavailable),

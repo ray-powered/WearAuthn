@@ -7,7 +7,8 @@
     <string name="connecting_to_device_message"><![CDATA[Attaching to<br><b>%1$s</b>…]]></string>
     <string name="connected_to_device_plain">Attached to\n%1$s</string>
     <string name="connecting_to_device_plain">Attaching to\n%1$s…</string>
-    <string name="connected_to_device_explanation">Use as if a USB security key were attached to that device.\nHelp with common issues is available on your phone.</string>
+    <string name="connected_to_device_explanation">Ready for authentication requests.</string>
+    <string name="action_disconnect">Disconnect</string>
     <string name="preference_about_key" translatable="false">preference_about</string>
     <string name="preference_bluetooth_settings_key" translatable="false">preference_bluetooth_settings</string>
     <string name="message_key_storage_type_unknown">Credential storage: Scanning…</string>
@@ -71,8 +72,8 @@
     <string name="prompt_delete_resident_credential_message">Delete credential for\n%1$s\n?</string>
     <string name="reset_via_bluetooth_only">Reset only possible via Bluetooth</string>
     <string name="verify_screen_lock_and_retry">Verify screen lock credential and try again</string>
-    <string name="prompt_authenticate_user_verification">Watch PIN next.</string>
-    <string name="prompt_register_user_verification">Watch PIN next.</string>
+    <string name="prompt_authenticate_user_verification">Lock credential next.</string>
+    <string name="prompt_register_user_verification">Lock credential next.</string>
     <string name="prompt_authenticate_resident_key">Choose account next.</string>
     <string name="prompt_register_resident_key">Saved on this watch.</string>
     <string name="message_register_user_verification">. Do not disable the screen lock.</string>
@@ -97,8 +98,8 @@
     <string name="status_bluetooth_permissions_required">Bluetooth permission not granted</string>
     <string name="generic_continue">Continue</string>
     <string name="generic_cancel">Cancel</string>
-    <string name="prompt_device_credential_title">PIN required</string>
-    <string name="prompt_device_credential_message">Enter your watch PIN next.</string>
+    <string name="prompt_device_credential_title">Credential required</string>
+    <string name="prompt_device_credential_message">Confirm your screen lock next.</string>
     <string name="prompt_device_credential_system_title">WearAuthn</string>
     <string name="prompt_device_credential_system_message">Unlock to continue.</string>
     <string name="status_selected">Selected</string>

@@ -42,7 +42,7 @@ val Context.vibrator
     get() = ContextCompat.getSystemService(this, Vibrator::class.java)
 // Only null in an emulator.
 val Context.bluetoothAdapter: BluetoothAdapter?
-    get() = ContextCompat.getSystemService(this, BluetoothManager::class.java)!!.adapter
+    get() = ContextCompat.getSystemService(this, BluetoothManager::class.java)?.adapter
 
 val Context.defaultSharedPreferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(this)

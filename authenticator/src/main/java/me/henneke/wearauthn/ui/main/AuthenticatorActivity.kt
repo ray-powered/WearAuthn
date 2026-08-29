@@ -90,7 +90,9 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ambientController = AmbientModeSupport.attach(this)
+        try {
+            ambientController = AmbientModeSupport.attach(this)
+        } catch (_: Exception) {}
 
         setContent {
             WearAuthnTheme {
@@ -110,26 +112,36 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
                     onRequestBluetoothPermissions = { requestBluetoothPermissions() },
                     isBluetoothEnabled = isBtEnabled,
                     onRequestEnableBluetooth = {
-                        enableBtLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                        try {
+                            enableBtLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                        } catch (_: Exception) {}
                     },
                     isDiscoverable = isDiscoverable,
                     onRequestMakeDiscoverable = {
-                        makeDiscoverableLauncher.launch(
-                            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60)
-                            }
-                        )
+                        try {
+                            makeDiscoverableLauncher.launch(
+                                Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                                    putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60)
+                                }
+                            )
+                        } catch (_: Exception) {}
                     },
                     onOpenBluetoothSettings = {
-                        startActivity(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+                        try {
+                            startActivity(Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+                        } catch (_: Exception) {}
                     },
                     bondedDevices = bondedDevicesState,
                     onConnectDevice = { device ->
-                        HidDataSender.requestConnect(device)
+                        try {
+                            HidDataSender.requestConnect(device)
+                        } catch (_: Exception) {}
                     },
                     nfcState = nfcState,
                     onOpenNfcSettings = {
-                        startActivity(Intent(android.provider.Settings.ACTION_NFC_SETTINGS))
+                        try {
+                            startActivity(Intent(android.provider.Settings.ACTION_NFC_SETTINGS))
+                        } catch (_: Exception) {}
                     },
                     userVerificationState = uvState,
                     isScreenLockEnabled = isLockEnabled,
@@ -140,7 +152,9 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
                         manageCredentials()
                     },
                     onOpenAbout = {
-                        startActivity(Intent(this@AuthenticatorActivity, AboutActivity::class.java))
+                        try {
+                            startActivity(Intent(this@AuthenticatorActivity, AboutActivity::class.java))
+                        } catch (_: Exception) {}
                     },
                     isDeveloperMode = isDevMode,
                     currentLogLevel = logLevel,
@@ -158,21 +172,27 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(
-            bluetoothBroadcastReceiver,
-            IntentFilter().apply {
+        try {
+            val filter = IntentFilter().apply {
                 addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
                 addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
                 addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
                 addAction(BluetoothDevice.ACTION_CLASS_CHANGED)
                 addAction(BluetoothDevice.ACTION_NAME_CHANGED)
             }
-        )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(bluetoothBroadcastReceiver, filter, RECEIVER_EXPORTED)
+            } else {
+                registerReceiver(bluetoothBroadcastReceiver, filter)
+            }
+        } catch (_: Exception) {}
         registerHidDeviceProfile()
         refreshState()
         launch {
-            AuthenticatorContext.initAuthenticator(this@AuthenticatorActivity.applicationContext)
-            AuthenticatorContext.refreshCachedWebAuthnCredentialIfNecessary(applicationContext)
+            try {
+                AuthenticatorContext.initAuthenticator(this@AuthenticatorActivity.applicationContext)
+                AuthenticatorContext.refreshCachedWebAuthnCredentialIfNecessary(applicationContext)
+            } catch (_: Exception) {}
         }
     }
 
@@ -187,15 +207,19 @@ class AuthenticatorActivity : FragmentActivity(), CoroutineScope, Logging,
         super.onDestroy()
         coroutineContext.cancelChildren()
         if (hidDeviceProfile != null) {
-            HidDataSender.unregister(hidProfileListener, null)
+            try {
+                HidDataSender.unregister(hidProfileListener, null)
+            } catch (_: Exception) {}
             hidDeviceProfile = null
         }
     }
 
     private fun registerHidDeviceProfile() {
-        if (hasBluetoothPermissions && bluetoothAdapter != null && hidDeviceProfile == null) {
-            hidDeviceProfile = HidDataSender.register(this, hidProfileListener, null)
-        }
+        try {
+            if (hasBluetoothPermissions && bluetoothAdapter != null && hidDeviceProfile == null) {
+                hidDeviceProfile = HidDataSender.register(this, hidProfileListener, null)
+            }
+        } catch (_: Exception) {}
     }
 
     private fun requestBluetoothPermissions() {

@@ -103,7 +103,7 @@ interface Logging {
 
         private const val MAX_LOG_LINE_LENGTH = 4_000
 
-        private lateinit var minimumLogLevel: LogLevel
+        var minimumLogLevel: LogLevel = LogLevel.Disabled
     }
 }
 

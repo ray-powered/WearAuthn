@@ -145,10 +145,7 @@ class Ctap2RequestInfo(
 ) :
     RequestInfo(context, action) {
 
-    override val formattedRp = if (!rpName.isNullOrBlank())
-        "<br/><b>${rpId.escapeHtml()}</b><br/>(“${rpName.escapeHtml()}”)<br/>"
-    else
-        "<br/><b>${rpId.escapeHtml()}</b><br/>"
+    override val formattedRp = "<br/><b>${rpId.escapeHtml()}</b>"
 
     override val shortRp = rpId
 

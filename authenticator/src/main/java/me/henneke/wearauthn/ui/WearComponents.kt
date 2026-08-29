@@ -2,6 +2,7 @@ package me.henneke.wearauthn.ui
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
 import androidx.wear.compose.material3.ListSubHeader
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
 
@@ -86,4 +88,22 @@ fun WearBodyItem(
     text: String,
 ) {
     Text(text = text, modifier = modifier.fillMaxWidth().padding(contentPadding), color = color)
+}
+
+@Composable
+fun WearDetailItem(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+    }
 }

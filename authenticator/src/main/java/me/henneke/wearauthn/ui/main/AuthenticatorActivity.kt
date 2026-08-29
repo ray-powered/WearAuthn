@@ -32,6 +32,7 @@ import androidx.core.content.edit
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import kotlinx.coroutines.CoroutineScope
@@ -61,7 +62,6 @@ import me.henneke.wearauthn.ui.WearSection
 import me.henneke.wearauthn.ui.bluetoothAdapter
 import me.henneke.wearauthn.ui.defaultSharedPreferences
 import me.henneke.wearauthn.ui.hasBluetoothPermissions
-import me.henneke.wearauthn.ui.showToast
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 
 @ExperimentalUnsignedTypes
@@ -75,6 +75,7 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     private var showPasswordlessConfirmation by mutableStateOf(false)
     private var receiverRegistered = false
     private var hidDeviceProfile: HidDeviceProfile? = null
+    private var bluetoothNotice: String? = null
     private var hasUpdatedInAmbientMode = false
 
     private val ambientObserver by lazy {
@@ -98,10 +99,12 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     private val permissionResult =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             if (result.values.all { it }) {
+                bluetoothNotice = null
                 registerHidDeviceProfile()
                 refreshState()
             } else {
-                showToast(getString(R.string.status_bluetooth_permissions_required))
+                bluetoothNotice = getString(R.string.status_bluetooth_permissions_required)
+                refreshState()
             }
         }
 
@@ -117,6 +120,7 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
                         onBluetoothSettings = ::openBluetoothSettings,
                         onDiscoverable = ::requestDiscoverable,
                         onDevice = { HidDataSender.requestConnect(it) },
+                        onBluetoothRetry = ::retryBluetooth,
                         onNfc = ::openNfcSettings,
                         onPasswordless = { showPasswordlessConfirmation = true },
                         onCredentials = ::openCredentials,
@@ -158,6 +162,7 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
 
     override fun onResume() {
         super.onResume()
+        registerHidDeviceProfile()
         refreshState()
     }
 
@@ -190,9 +195,18 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
     }
 
     private fun registerHidDeviceProfile() {
-        if (hasBluetoothPermissions && bluetoothAdapter != null && hidDeviceProfile == null) {
-            hidDeviceProfile = HidDataSender.register(this, hidProfileListener, null)
+        if (hasBluetoothPermissions && bluetoothAdapter != null) {
+            if (hidDeviceProfile == null) {
+                hidDeviceProfile = HidDataSender.register(this, hidProfileListener, null)
+            }
+            HidDataSender.ensureAppRegistered()
         }
+    }
+
+    private fun retryBluetooth() {
+        bluetoothNotice = null
+        registerHidDeviceProfile()
+        refreshState()
     }
 
     private fun requestBluetoothPermissions() {
@@ -219,7 +233,8 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
                 activityResult.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             }
         } catch (_: SecurityException) {
-            showToast(getString(R.string.status_bluetooth_permissions_required))
+            bluetoothNotice = getString(R.string.status_bluetooth_permissions_required)
+            refreshState()
         }
     }
 
@@ -296,6 +311,7 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
                 bluetoothAccessAvailable = false
                 bluetoothEnabled = false
                 discoverable = false
+                bluetoothNotice = getString(R.string.status_bluetooth_permissions_required)
                 emptyList()
             }
         } else {
@@ -311,6 +327,8 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
             bluetoothEnabled = bluetoothEnabled,
             hasBluetoothPermission = bluetoothAccessAvailable,
             discoverable = discoverable,
+            bluetoothNotice = bluetoothNotice,
+            hidRegistrationState = HidDataSender.appRegistrationState,
             devices = devices,
             nfcEnabled = nfcAdapter?.isEnabled,
             userVerificationState = verificationState,
@@ -373,6 +391,9 @@ private data class MainMenuState(
     val bluetoothEnabled: Boolean = false,
     val hasBluetoothPermission: Boolean = true,
     val discoverable: Boolean = false,
+    val bluetoothNotice: String? = null,
+    val hidRegistrationState: HidDataSender.AppRegistrationState =
+        HidDataSender.AppRegistrationState.WAITING_FOR_SERVICE,
     val devices: List<HostDeviceState> = emptyList(),
     val nfcEnabled: Boolean? = null,
     val userVerificationState: Boolean? = null,
@@ -396,6 +417,7 @@ private fun MainMenu(
     onBluetoothSettings: () -> Unit,
     onDiscoverable: () -> Unit,
     onDevice: (BluetoothDevice) -> Unit,
+    onBluetoothRetry: () -> Unit,
     onNfc: () -> Unit,
     onPasswordless: () -> Unit,
     onCredentials: () -> Unit,
@@ -413,6 +435,33 @@ private fun MainMenu(
             }
         }
         item { WearSection(stringResource(R.string.preference_category_bluetooth_title)) }
+        state.bluetoothNotice?.let { notice ->
+            item {
+                WearBodyItem(
+                    text = notice,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+        if (state.hasBluetoothPermission && state.bluetoothEnabled) {
+            when (state.hidRegistrationState) {
+                HidDataSender.AppRegistrationState.READY -> item {
+                    WearBodyItem(text = stringResource(R.string.status_bluetooth_key_ready))
+                }
+                HidDataSender.AppRegistrationState.FAILED -> item {
+                    WearButton(
+                        label = stringResource(R.string.status_bluetooth_key_unavailable),
+                        secondaryLabel = stringResource(R.string.status_bluetooth_tap_to_retry),
+                        iconRes = R.drawable.ic_bluetooth,
+                        onClick = onBluetoothRetry,
+                    )
+                }
+                HidDataSender.AppRegistrationState.WAITING_FOR_SERVICE,
+                HidDataSender.AppRegistrationState.REGISTERING -> item {
+                    WearBodyItem(text = stringResource(R.string.status_bluetooth_key_starting))
+                }
+            }
+        }
         state.devices.forEach { device ->
             item(key = device.device.address) {
                 WearButton(

@@ -5,7 +5,6 @@ import android.content.DialogInterface
 import android.os.Bundle
 import android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP
 import android.os.PowerManager.FULL_WAKE_LOCK
-import androidx.annotation.DrawableRes
 import androidx.activity.ComponentDialog
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -14,11 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.Text
 import kotlinx.coroutines.delay
 import me.henneke.wearauthn.R
@@ -34,7 +31,6 @@ class TimedAcceptDenyDialog(context: Context) : ComponentDialog(context) {
 
     private var titleText by mutableStateOf<CharSequence?>(null)
     private var messageText by mutableStateOf<CharSequence?>(null)
-    private var iconRes by mutableStateOf(0)
     private var timeoutMs by mutableLongStateOf(DEFAULT_TIMEOUT)
     private var hasPositiveButton by mutableStateOf(false)
     private var hasNegativeButton by mutableStateOf(false)
@@ -57,14 +53,6 @@ class TimedAcceptDenyDialog(context: Context) : ComponentDialog(context) {
                             title = titleText?.toString()?.takeIf { it.isNotBlank() }
                                 ?: stringResource(R.string.app_name),
                         ) {
-                            if (iconRes != 0) {
-                                item {
-                                    Icon(
-                                        painter = painterResource(iconRes),
-                                        contentDescription = null,
-                                    )
-                                }
-                            }
                             messageText?.let { message ->
                                 item {
                                     Text(
@@ -146,10 +134,6 @@ class TimedAcceptDenyDialog(context: Context) : ComponentDialog(context) {
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
         super.onStop()
-    }
-
-    fun setIcon(@DrawableRes resId: Int) {
-        iconRes = resId
     }
 
     fun setMessage(message: CharSequence?) {

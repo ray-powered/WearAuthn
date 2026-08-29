@@ -1,6 +1,7 @@
 package me.henneke.wearauthn.ui.main
 
 import android.os.Bundle
+import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -12,14 +13,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.Text
+import com.google.android.gms.common.util.Hex
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.fido.context.AuthenticatorContext
 import me.henneke.wearauthn.fido.context.WebAuthnCredential
-import me.henneke.wearauthn.ui.WearBodyItem
 import me.henneke.wearauthn.ui.WearButton
+import me.henneke.wearauthn.ui.WearDetailItem
 import me.henneke.wearauthn.ui.WearListScreen
 import me.henneke.wearauthn.ui.WearSection
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
+import me.henneke.wearauthn.sha256
 
 @ExperimentalUnsignedTypes
 class ResidentCredentialsList : ComponentActivity() {
@@ -39,7 +42,98 @@ class ResidentCredentialsList : ComponentActivity() {
                 } else {
                     BackHandler { selected = null }
                     WearListScreen(title = item.rpId) {
-                        item { WearBodyItem(text = item.formattedInfo) }
+                        item { WearSection(stringResource(R.string.credential_section_site)) }
+                        item {
+                            WearDetailItem(
+                                label = stringResource(R.string.credential_label_rp_id),
+                                value = item.rpId,
+                            )
+                        }
+                        item.credential.rpName?.takeUnless { it.isBlank() }?.let { rpName ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_rp_name),
+                                    value = rpName,
+                                )
+                            }
+                        }
+                        item { WearSection(stringResource(R.string.credential_section_account)) }
+                        item.credential.userDisplayName?.takeUnless { it.isBlank() }?.let { displayName ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_display_name),
+                                    value = displayName,
+                                )
+                            }
+                        }
+                        item.credential.userName?.takeUnless { it.isBlank() }?.let { userName ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_username),
+                                    value = userName,
+                                )
+                            }
+                        }
+                        item.credential.userId?.let { userId ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_user_id),
+                                    value = userId.groupedHex(),
+                                )
+                            }
+                        }
+                        item.credential.userIcon?.takeUnless { it.isBlank() }?.let { icon ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_user_icon),
+                                    value = icon,
+                                )
+                            }
+                        }
+                        item { WearSection(stringResource(R.string.credential_section_credential)) }
+                        item.credential.creationDate?.let { creationDate ->
+                            item {
+                                WearDetailItem(
+                                    label = stringResource(R.string.credential_label_created),
+                                    value = listOf(
+                                        DateFormat.getMediumDateFormat(this@ResidentCredentialsList)
+                                            .format(creationDate),
+                                        DateFormat.getTimeFormat(this@ResidentCredentialsList)
+                                            .format(creationDate),
+                                    ).joinToString(" "),
+                                )
+                            }
+                        }
+                        item {
+                            WearDetailItem(
+                                label = stringResource(R.string.credential_label_hardware_backed),
+                                value = stringResource(
+                                    if (item.credential.isKeyMaterialInTEE) R.string.generic_yes
+                                    else R.string.generic_no,
+                                ),
+                            )
+                        }
+                        item {
+                            WearDetailItem(
+                                label = stringResource(R.string.credential_label_hmac_secret),
+                                value = stringResource(
+                                    if (item.credential.hasHmacSecret) R.string.generic_yes
+                                    else R.string.generic_no,
+                                ),
+                            )
+                        }
+                        item {
+                            WearDetailItem(
+                                label = stringResource(R.string.credential_label_fingerprint),
+                                value = item.credential.keyHandle.sha256().copyOfRange(0, 8).groupedHex(),
+                            )
+                        }
+                        item {
+                            WearDetailItem(
+                                label = stringResource(R.string.credential_label_rp_id_hash),
+                                value = item.credential.rpIdHash.groupedHex(),
+                            )
+                        }
                         item {
                             WearButton(
                                 label = stringResource(R.string.button_delete),
@@ -76,7 +170,6 @@ class ResidentCredentialsList : ComponentActivity() {
                     credential = credential,
                     title = info.first.toString(),
                     summary = info.second?.toString(),
-                    formattedInfo = credential.getFormattedInfo().toString(),
                 )
             }
             if (items.isEmpty()) null else CredentialGroup(rpId, items)
@@ -91,8 +184,13 @@ private data class CredentialItem(
     val credential: WebAuthnCredential,
     val title: String,
     val summary: String?,
-    val formattedInfo: String,
 )
+
+private fun ByteArray.groupedHex(maxBytes: Int = 32): String {
+    val visibleBytes = if (size > maxBytes) copyOf(maxBytes) else this
+    val grouped = Hex.bytesToStringUppercase(visibleBytes).chunked(4).joinToString(" ")
+    return if (size > maxBytes) "$grouped … ($size bytes)" else grouped
+}
 
 @Composable
 private fun CredentialList(groups: List<CredentialGroup>, onSelect: (CredentialItem) -> Unit) {

@@ -116,12 +116,18 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
                 }
                 if (state == BluetoothProfile.STATE_DISCONNECTING ||
                     state == BluetoothProfile.STATE_DISCONNECTED
-                ) finish()
+                ) {
+                    connectionText = getString(R.string.status_bluetooth_reconnecting)
+                }
             }
         }
 
         override fun onAppStatusChanged(registered: Boolean) {
-            if (!registered) finish()
+            if (!registered) {
+                runOnUiThread {
+                    connectionText = getString(R.string.status_bluetooth_reconnecting)
+                }
+            }
         }
 
         override fun onServiceStateChanged(proxy: BluetoothProfile?) = Unit
@@ -163,6 +169,7 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
     override fun onStart() {
         super.onStart()
         if (!isBluetoothEnabled) startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        HidDataSender.ensureAppRegistered()
         transactionManager = TransactionManager(authenticatorContext)
         val profile = hidDeviceProfile ?: run {
             e { "hidDeviceProfile is null" }
@@ -185,11 +192,16 @@ class AuthenticatorAttachedActivity : ComponentActivity(), Logging {
             hidProfileListener.onConnectionStateChanged(device, BluetoothProfile.STATE_CONNECTING)
             HidDataSender.requestConnect(device)
         } else if (profile.connectedDevices.isEmpty()) {
-            finish()
+            connectionText = getString(R.string.status_bluetooth_reconnecting)
         } else {
             val connectedDevice = profile.connectedDevices.first()
             hidProfileListener.onConnectionStateChanged(connectedDevice, BluetoothProfile.STATE_CONNECTED)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        HidDataSender.ensureAppRegistered()
     }
 
     override fun onStop() {

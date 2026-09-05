@@ -66,9 +66,13 @@
         <activity
             android:name="me.henneke.wearauthn.ui.main.AboutActivity"
             android:taskAffinity=".ui.main.AuthenticatorActivity" />
+        <!--
+        Deliberately uses the default "standard" launch mode: a singleTop instance would receive a
+        second request via onNewIntent and a single screen lock confirmation would then authorize
+        both requesters.
+        -->
         <activity
             android:name="me.henneke.wearauthn.ui.ConfirmDeviceCredentialActivity"
-            android:launchMode="singleTop"
             android:taskAffinity=".ui.main.AuthenticatorActivity" />
         <activity
             android:name="me.henneke.wearauthn.ui.ManageSpaceActivity"

@@ -34,9 +34,12 @@ const val EXTRA_MANAGE_SPACE_RECEIVER = "me.henneke.wearauthn.common.EXTRA_MANAG
 class ManageSpaceActivity : ComponentActivity() {
 
     private var step by mutableStateOf(ResetStep.FirstWarning)
+    private var receiver: ResultReceiver? = null
+    private var resultSent = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        receiver = intent.manageSpaceReceiver()
         setContent {
             WearAuthnTheme {
                 BackHandler { returnResult(Activity.RESULT_CANCELED) }
@@ -126,10 +129,24 @@ class ManageSpaceActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        // Answer a requester that is blocked on our result even if we are torn down without an
+        // explicit decision; see ConfirmDeviceCredentialActivity for the same invariant.
+        if (isFinishing)
+            sendResult(Activity.RESULT_CANCELED)
+        super.onDestroy()
+    }
+
     private fun returnResult(resultCode: Int) {
-        intent.manageSpaceReceiver()?.send(resultCode, Bundle.EMPTY)
+        sendResult(resultCode)
         setResult(resultCode)
         finish()
+    }
+
+    private fun sendResult(resultCode: Int) {
+        if (resultSent) return
+        resultSent = true
+        receiver?.send(resultCode, Bundle.EMPTY)
     }
 }
 

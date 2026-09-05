@@ -10,6 +10,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.ButtonDefaults
 import me.henneke.wearauthn.R
@@ -18,10 +21,27 @@ import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 const val EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER =
     "me.henneke.wearauthn.common.EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER"
 
+private const val STATE_CREDENTIAL_PROMPT_LAUNCHED = "credential_prompt_launched"
+
+/**
+ * Asks the user to confirm their screen lock and reports the outcome to the requester that launched
+ * this activity.
+ *
+ * Two invariants matter here and are relied upon by [me.henneke.wearauthn.fido.context.AuthenticatorContext]:
+ *
+ *  * Exactly one requester is served per instance. A confirmation must never authorize a request
+ *    other than the one it was raised for, so this activity uses the default (`standard`) launch
+ *    mode and never adopts a second receiver.
+ *  * The requester is always answered exactly once, including when this activity is destroyed
+ *    without an explicit decision — the task shares its affinity with an activity marked
+ *    `clearTaskOnLaunch`, so relaunching the app from the launcher can tear the prompt down at any
+ *    point. An unanswered requester would otherwise block on its continuation forever.
+ */
 class ConfirmDeviceCredentialActivity : ComponentActivity() {
 
-    private val receivers = mutableListOf<ResultReceiver>()
-    private var credentialPromptLaunched = false
+    private var receiver: ResultReceiver? = null
+    private var resultSent = false
+    private var credentialPromptLaunched by mutableStateOf(false)
 
     private val credentialResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -30,7 +50,9 @@ class ConfirmDeviceCredentialActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        addReceiver(intent)
+        receiver = intent.resultReceiverExtra(EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER)
+        credentialPromptLaunched =
+            savedInstanceState?.getBoolean(STATE_CREDENTIAL_PROMPT_LAUNCHED) == true
         setContent {
             WearAuthnTheme {
                 BackHandler { returnResult(Activity.RESULT_CANCELED) }
@@ -57,14 +79,19 @@ class ConfirmDeviceCredentialActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        addReceiver(intent)
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_CREDENTIAL_PROMPT_LAUNCHED, credentialPromptLaunched)
     }
 
-    private fun addReceiver(source: Intent) {
-        source.resultReceiverExtra(EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER)?.let(receivers::add)
+    override fun onDestroy() {
+        // isFinishing is true exactly when this instance is going away for good, which includes the
+        // task being cleared out from under a pending prompt. A system-initiated recreation (config
+        // change, "don't keep activities") re-reads the receiver from the intent and can still
+        // answer, so it must not be reported as a cancellation here.
+        if (isFinishing)
+            sendResult(Activity.RESULT_CANCELED)
+        super.onDestroy()
     }
 
     @Suppress("DEPRECATION")
@@ -84,10 +111,15 @@ class ConfirmDeviceCredentialActivity : ComponentActivity() {
     }
 
     private fun returnResult(resultCode: Int) {
-        receivers.distinct().forEach { it.send(resultCode, Bundle.EMPTY) }
-        receivers.clear()
+        sendResult(resultCode)
         setResult(resultCode)
         finish()
+    }
+
+    private fun sendResult(resultCode: Int) {
+        if (resultSent) return
+        resultSent = true
+        receiver?.send(resultCode, Bundle.EMPTY)
     }
 }
 

@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.ResultReceiver
-import android.os.SystemClock
 import android.security.keystore.UserNotAuthenticatedException
 import android.text.Html
 import android.text.Spanned
@@ -27,7 +26,6 @@ import me.henneke.wearauthn.fido.ctap2.CtapError.Other
 import me.henneke.wearauthn.fido.u2f.resolveAppIdHash
 import me.henneke.wearauthn.ui.*
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 private const val COUNTERS_PREFERENCE_FILE = "counters"
 private val COUNTERS_WRITE_LOCK = Object()
@@ -351,36 +349,39 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
             status = AuthenticatorStatus.WAITING_FOR_UP
         try {
             credentialConfirmationMutex.withLock {
-                val recentlyConfirmed =
-                    lastCredentialConfirmationAt > 0 &&
-                        SystemClock.elapsedRealtime() - lastCredentialConfirmationAt < CREDENTIAL_REUSE_MS
-                if (!recentlyConfirmed || context.keyguardManager?.isDeviceLocked != false) {
-                    val confirmed = withContext(Dispatchers.Main) {
-                        val confirmCredentialJob = async {
-                            suspendCoroutine<Boolean> { continuation ->
-                                val intent =
-                                    Intent(context, ConfirmDeviceCredentialActivity::class.java).apply {
-                                        putExtra(
-                                            EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER,
-                                            object : ResultReceiver(Handler(context.mainLooper)) {
-                                                override fun onReceiveResult(
-                                                    resultCode: Int,
-                                                    resultData: Bundle?,
-                                                ) {
+                withContext(Dispatchers.Main) {
+                    val confirmCredentialJob = async {
+                        suspendCancellableCoroutine<Boolean> { continuation ->
+                            val intent =
+                                Intent(context, ConfirmDeviceCredentialActivity::class.java).apply {
+                                    putExtra(
+                                        EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER,
+                                        object : ResultReceiver(Handler(context.mainLooper)) {
+                                            override fun onReceiveResult(
+                                                resultCode: Int,
+                                                resultData: Bundle?,
+                                            ) {
+                                                if (continuation.isActive)
                                                     continuation.resume(resultCode == Activity.RESULT_OK)
-                                                }
-                                            },
-                                        )
-                                        if (context !is Activity) flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    }
-                                context.startActivity(intent)
-                            }
+                                            }
+                                        },
+                                    )
+                                    if (context !is Activity) flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                            context.startActivity(intent)
                         }
-                        delay(1_000)
-                        wink(context)
+                    }
+                    delay(1_000)
+                    wink(context)
+                    // Bounded wait: the mutex is process wide, so a confirmation that never comes
+                    // back would otherwise block every later user verification for good.
+                    val confirmed = withTimeoutOrNull(CREDENTIAL_CONFIRMATION_TIMEOUT_MS) {
                         confirmCredentialJob.await()
                     }
-                    if (confirmed) lastCredentialConfirmationAt = SystemClock.elapsedRealtime()
+                    if (confirmed == null) {
+                        w { "Device credential confirmation timed out" }
+                        confirmCredentialJob.cancel()
+                    }
                 }
             }
         } finally {
@@ -501,17 +502,18 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
         return try {
             status = AuthenticatorStatus.WAITING_FOR_UP
             withContext(Dispatchers.Main) {
-                suspendCoroutine<Boolean> { continuation ->
+                suspendCancellableCoroutine<Boolean> { continuation ->
                     val intent =
                         Intent(context, ManageSpaceActivity::class.java).apply {
                             putExtra(
                                 EXTRA_MANAGE_SPACE_RECEIVER,
-                                object : ResultReceiver(Handler()) {
+                                object : ResultReceiver(Handler(context.mainLooper)) {
                                     override fun onReceiveResult(
                                         resultCode: Int,
                                         resultData: Bundle?
                                     ) {
-                                        continuation.resume(resultCode == Activity.RESULT_OK)
+                                        if (continuation.isActive)
+                                            continuation.resume(resultCode == Activity.RESULT_OK)
                                     }
                                 })
                         }
@@ -543,9 +545,11 @@ abstract class AuthenticatorContext(private val context: Context, val isHidTrans
     companion object : Logging {
         override val TAG = "AuthenticatorContext"
 
-        private const val CREDENTIAL_REUSE_MS = 30_000L
+        // Whether the user actually verified is authoritative only in the Keystore, which enforces
+        // its own validity window on the user verification fuse. This bound merely stops a prompt
+        // that is never answered from holding the mutex forever.
+        private const val CREDENTIAL_CONFIRMATION_TIMEOUT_MS = 120_000L
         private val credentialConfirmationMutex = Mutex()
-        private var lastCredentialConfirmationAt = 0L
 
         fun initAuthenticator(context: Context) {
             if (isKeystoreEmpty) {

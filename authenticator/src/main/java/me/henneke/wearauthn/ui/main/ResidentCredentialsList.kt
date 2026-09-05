@@ -14,6 +14,7 @@ import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.Text
 import com.google.android.gms.common.util.Hex
+import me.henneke.wearauthn.Logging
 import me.henneke.wearauthn.R
 import me.henneke.wearauthn.fido.context.AuthenticatorContext
 import me.henneke.wearauthn.fido.context.WebAuthnCredential
@@ -23,9 +24,12 @@ import me.henneke.wearauthn.ui.WearListScreen
 import me.henneke.wearauthn.ui.WearSection
 import me.henneke.wearauthn.ui.theme.WearAuthnTheme
 import me.henneke.wearauthn.sha256
+import me.henneke.wearauthn.w
 
 @ExperimentalUnsignedTypes
-class ResidentCredentialsList : ComponentActivity() {
+class ResidentCredentialsList : ComponentActivity(), Logging {
+
+    override val TAG = "ResidentCredentialsList"
 
     private var groups by mutableStateOf<List<CredentialGroup>>(emptyList())
     private var selected by mutableStateOf<CredentialItem?>(null)
@@ -163,7 +167,14 @@ class ResidentCredentialsList : ComponentActivity() {
     private fun refreshCredentials() {
         groups = AuthenticatorContext.getAllResidentCredentials(this).mapNotNull { (rpId, credentials) ->
             val items = credentials.mapIndexed { index, credential ->
-                credential.unlockUserInfoIfNecessary()
+                // Decryption needs a recent screen lock confirmation and throws once the user info
+                // key's validity window has lapsed. Failing to reveal a name must degrade to the
+                // placeholder rendering, never take down the management screen.
+                try {
+                    credential.unlockUserInfoIfNecessary()
+                } catch (error: Exception) {
+                    w(error) { "Failed to unlock user info for a resident credential:" }
+                }
                 val info = credential.getTwoLineInfo(index + 1)
                 CredentialItem(
                     rpId = rpId,

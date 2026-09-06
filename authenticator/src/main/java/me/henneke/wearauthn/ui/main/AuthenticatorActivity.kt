@@ -22,10 +22,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
@@ -33,8 +35,11 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.AlertDialogDefaults
 import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.SwitchButton
+import androidx.wear.compose.material3.RadioButton
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -55,9 +60,10 @@ import me.henneke.wearauthn.i
 import me.henneke.wearauthn.isDeveloperModeEnabled
 import me.henneke.wearauthn.ui.ConfirmDeviceCredentialActivity
 import me.henneke.wearauthn.ui.EXTRA_CONFIRM_DEVICE_CREDENTIAL_RECEIVER
+import me.henneke.wearauthn.ui.WearAppScaffold
 import me.henneke.wearauthn.ui.WearBodyItem
 import me.henneke.wearauthn.ui.WearButton
-import me.henneke.wearauthn.ui.WearListScreen
+import me.henneke.wearauthn.ui.WearScreen
 import me.henneke.wearauthn.ui.WearSection
 import me.henneke.wearauthn.ui.bluetoothAdapter
 import me.henneke.wearauthn.ui.defaultSharedPreferences
@@ -113,38 +119,42 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
         lifecycle.addObserver(ambientObserver)
         setContent {
             WearAuthnTheme {
-                when (screen) {
-                    MainScreen.Menu -> MainMenu(
-                        state = state,
-                        onBluetoothPermissions = ::requestBluetoothPermissions,
-                        onBluetoothSettings = ::openBluetoothSettings,
-                        onDiscoverable = ::requestDiscoverable,
-                        onDevice = { HidDataSender.requestConnect(it) },
-                        onBluetoothRetry = ::retryBluetooth,
-                        onNfc = ::openNfcSettings,
-                        onPasswordless = { showPasswordlessConfirmation = true },
-                        onCredentials = ::openCredentials,
-                        onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
-                        onLogLevel = { screen = MainScreen.LogLevel },
-                    )
-                    MainScreen.LogLevel -> LogLevelScreen(
-                        selected = state.logLevel,
-                        onSelect = ::setLogLevel,
-                        onBack = { screen = MainScreen.Menu },
+                // One app scaffold enclosing both screens, so TimeText stays put across the
+                // menu <-> log level transition instead of being rebuilt with each swap.
+                WearAppScaffold {
+                    when (screen) {
+                        MainScreen.Menu -> MainMenu(
+                            state = state,
+                            onBluetoothPermissions = ::requestBluetoothPermissions,
+                            onBluetoothSettings = ::openBluetoothSettings,
+                            onDiscoverable = ::requestDiscoverable,
+                            onDevice = { HidDataSender.requestConnect(it) },
+                            onBluetoothRetry = ::retryBluetooth,
+                            onNfc = ::openNfcSettings,
+                            onPasswordless = { showPasswordlessConfirmation = true },
+                            onCredentials = ::openCredentials,
+                            onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
+                            onLogLevel = { screen = MainScreen.LogLevel },
+                        )
+                        MainScreen.LogLevel -> LogLevelScreen(
+                            selected = state.logLevel,
+                            onSelect = ::setLogLevel,
+                            onBack = { screen = MainScreen.Menu },
+                        )
+                    }
+                    PasswordlessConfirmation(
+                        visible = showPasswordlessConfirmation,
+                        message = Html.fromHtml(
+                            getString(R.string.prompt_single_factor_mode_message),
+                            Html.FROM_HTML_MODE_LEGACY,
+                        ).toString(),
+                        onConfirm = {
+                            showPasswordlessConfirmation = false
+                            confirmDeviceCredential { armUserVerificationFuse(this) }
+                        },
+                        onDismiss = { showPasswordlessConfirmation = false },
                     )
                 }
-                PasswordlessConfirmation(
-                    visible = showPasswordlessConfirmation,
-                    message = Html.fromHtml(
-                        getString(R.string.prompt_single_factor_mode_message),
-                        Html.FROM_HTML_MODE_LEGACY,
-                    ).toString(),
-                    onConfirm = {
-                        showPasswordlessConfirmation = false
-                        confirmDeviceCredential { armUserVerificationFuse(this) }
-                    },
-                    onDismiss = { showPasswordlessConfirmation = false },
-                )
             }
         }
     }
@@ -424,7 +434,7 @@ private fun MainMenu(
     onAbout: () -> Unit,
     onLogLevel: () -> Unit,
 ) {
-    WearListScreen(title = stringResource(R.string.app_name)) {
+    WearScreen(title = stringResource(R.string.app_name)) {
         if (!state.hasBluetoothPermission) {
             item {
                 WearButton(
@@ -482,22 +492,21 @@ private fun MainMenu(
             )
         }
         item {
-            SwitchButton(
-                checked = state.discoverable,
-                onCheckedChange = { if (it) onDiscoverable() },
+            // Not a switch: discoverability is a one-shot request that the system grants for one
+            // minute and then drops on its own. A switch invites the user to turn it back off,
+            // which is not something this control can do.
+            WearButton(
+                label = stringResource(R.string.preference_discoverable_title),
+                secondaryLabel = stringResource(
+                    if (state.discoverable) R.string.preference_discoverable_summary_on
+                    else R.string.preference_discoverable_summary_off,
+                ),
+                iconRes = R.drawable.ic_bluetooth,
                 enabled = state.bluetoothEnabled && state.hasBluetoothPermission && !state.discoverable,
-                secondaryLabel = {
-                    Text(
-                        stringResource(
-                            if (state.discoverable) R.string.preference_discoverable_summary_on
-                            else R.string.preference_discoverable_summary_off,
-                        ),
-                    )
-                },
-                label = { Text(stringResource(R.string.preference_discoverable_title)) },
+                onClick = onDiscoverable,
             )
         }
-        item { WearSection("NFC") }
+        item { WearSection(stringResource(R.string.preference_category_nfc_title)) }
         item {
             WearButton(
                 label = stringResource(R.string.preference_nfc_title),
@@ -521,12 +530,15 @@ private fun MainMenu(
                     else R.string.preference_single_factor_mode_summary_enable_lock
                 null -> R.string.preference_single_factor_mode_summary_disabled
             }
-            SwitchButton(
-                checked = state.userVerificationState == true,
-                onCheckedChange = { if (it) onPasswordless() },
+            // Also not a switch: arming the user verification fuse is irreversible short of a full
+            // reset, so there is no "off" position to return to. The confirmation dialog this
+            // opens is what carries the consent.
+            WearButton(
+                label = stringResource(R.string.preference_single_factor_mode_title),
+                secondaryLabel = stringResource(uvSummary),
+                iconRes = R.drawable.ic_person,
                 enabled = state.userVerificationState == false && state.screenLockEnabled,
-                secondaryLabel = { Text(stringResource(uvSummary)) },
-                label = { Text(stringResource(R.string.preference_single_factor_mode_title)) },
+                onClick = onPasswordless,
             )
         }
         item {
@@ -563,14 +575,19 @@ private fun MainMenu(
 @Composable
 private fun LogLevelScreen(selected: String, onSelect: (LogLevel) -> Unit, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
-    WearListScreen(title = stringResource(R.string.preference_log_level_dialog_title)) {
+    WearScreen(title = stringResource(R.string.preference_log_level_dialog_title)) {
         item { WearBodyItem(text = stringResource(R.string.preference_log_level_dialog_message)) }
         LogLevel.entries.asReversed().forEach { level ->
             item {
-                WearButton(
-                    label = level.name,
-                    secondaryLabel = if (selected == level.name) stringResource(R.string.status_selected) else null,
-                    onClick = { onSelect(level) },
+                // A single choice list: RadioButton states the selection in the control itself,
+                // rather than as a "Selected" caption the user has to read on every row.
+                val spec = rememberTransformationSpec()
+                RadioButton(
+                    selected = selected == level.name,
+                    onSelect = { onSelect(level) },
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, spec),
+                    transformation = SurfaceTransformation(spec),
+                    label = { Text(level.name) },
                 )
             }
         }

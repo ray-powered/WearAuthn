@@ -67,6 +67,7 @@
     <string name="preference_title">Use via Bluetooth with</string>
     <string name="preference_category_advanced_title">Advanced</string>
     <string name="preference_category_bluetooth_title" translatable="false">Bluetooth</string>
+    <string name="preference_category_nfc_title" translatable="false">NFC</string>
     <string name="credential_management_title_no_credentials">No credentials for passwordless login</string>
     <string name="credential_management_title">Credentials for passwordless login</string>
     <string name="prompt_delete_resident_credential_message">Delete credential for\n%1$s\n?</string>

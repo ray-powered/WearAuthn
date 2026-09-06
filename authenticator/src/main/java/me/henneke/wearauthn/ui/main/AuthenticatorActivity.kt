@@ -133,7 +133,13 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
                             onNfc = ::openNfcSettings,
                             onPasswordless = { showPasswordlessConfirmation = true },
                             onCredentials = ::openCredentials,
-                            onAbout = { startActivity(Intent(this, AboutActivity::class.java)) },
+                            // Qualified: WearAppScaffold's content lambda has a BoxScope receiver,
+                            // so a bare `this` here would be the BoxScope, not the activity.
+                            onAbout = {
+                                startActivity(
+                                    Intent(this@AuthenticatorActivity, AboutActivity::class.java),
+                                )
+                            },
                             onLogLevel = { screen = MainScreen.LogLevel },
                         )
                         MainScreen.LogLevel -> LogLevelScreen(
@@ -150,7 +156,9 @@ class AuthenticatorActivity : ComponentActivity(), CoroutineScope, Logging {
                         ).toString(),
                         onConfirm = {
                             showPasswordlessConfirmation = false
-                            confirmDeviceCredential { armUserVerificationFuse(this) }
+                            confirmDeviceCredential {
+                                armUserVerificationFuse(this@AuthenticatorActivity)
+                            }
                         },
                         onDismiss = { showPasswordlessConfirmation = false },
                     )

@@ -1,7 +1,6 @@
 package me.henneke.wearauthn.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,8 +42,11 @@ import androidx.wear.compose.material3.lazy.transformedHeight
  * Single screen activities can use [WearListScreen], which pairs the two.
  */
 @Composable
-fun WearAppScaffold(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    AppScaffold(modifier = modifier, content = content)
+fun WearAppScaffold(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    // AppScaffold's content is scoped to BoxScope. That receiver is deliberately not passed on:
+    // nothing here needs align/matchParentSize, and exposing it silently rebinds `this` at every
+    // call site, so an activity that wrote `Intent(this, ...)` would hand over the BoxScope.
+    AppScaffold(modifier = modifier) { content() }
 }
 
 /**
